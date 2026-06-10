@@ -47,9 +47,11 @@ const ROUTES = {
 };
 
 export default async function handler(req, res) {
-  // req.url: /api/proxy/<route>/<rest>?<query>  (or /proxy/... via rewrite)
+  // The rewrite flattens /proxy/<route>/<rest>?<query> into
+  // /api/proxy?path=<route>/<rest>&<query> — no catch-all routing needed.
   const url = new URL(req.url, 'http://x');
-  const segments = url.pathname.replace(/^\/(api\/)?proxy\//, '').split('/');
+  const segments = (url.searchParams.get('path') ?? '').split('/').filter(Boolean);
+  url.searchParams.delete('path');
   const routeKey = segments.shift();
   const route = ROUTES[routeKey];
   if (!route) {
@@ -63,7 +65,8 @@ export default async function handler(req, res) {
     return;
   }
 
-  const rest = `/${segments.join('/')}${url.search}`;
+  const query = url.searchParams.toString();
+  const rest = `/${segments.join('/')}${query ? `?${query}` : ''}`;
   try {
     const upstream = await fetch(route.build(rest, key), {
       headers: {
