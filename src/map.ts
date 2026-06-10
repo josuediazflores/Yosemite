@@ -54,6 +54,33 @@ function applyTerrain(on: boolean): void {
   if (terrainChip) terrainChip.textContent = on ? '2D' : '3D';
 }
 
+// The fly-in aims a camera, not a drone with collision sensors: at cliff-base
+// sites (Camp 4 under the Yosemite Falls wall) the eye can end up inside
+// granite. After each site flight, verify the camera sits above the DEM and
+// back it off — flatter and farther — until it's clear.
+function ensureCameraClear(attempt = 0): void {
+  if (!terrainOn || attempt > 3) return;
+  // Camera position lives on the transform (typed, semi-internal in v5).
+  const transform = (map as unknown as { transform: { getCameraLngLat(): maplibregl.LngLat; getCameraAltitude(): number } }).transform;
+  const camLngLat = transform.getCameraLngLat();
+  const camAlt = transform.getCameraAltitude();
+  const ground = map.queryTerrainElevation(camLngLat);
+  if (ground == null) {
+    // DEM tile under the camera not loaded yet — re-check when the map settles.
+    if (attempt <= 3) map.once('idle', () => ensureCameraClear(attempt + 1));
+    return;
+  }
+  if (camAlt > ground + 60) return; // clear with margin
+  const opts = {
+    pitch: Math.max(42, map.getPitch() - 14),
+    zoom: map.getZoom() - 0.7,
+    duration: 500,
+  };
+  map.once('moveend', () => ensureCameraClear(attempt + 1));
+  if (REDUCED_MOTION) map.jumpTo(opts);
+  else map.easeTo(opts);
+}
+
 function esc(s: unknown): string {
   return String(s ?? '').replace(/[&<>"']/g, (c) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!,
@@ -497,14 +524,17 @@ function syncSelection(): void {
 
   if (site) {
     // Site view: tilt into real terrain and frame the landmark, panel right.
+    // Sites without a tuned framing (campgrounds) get a conservative camera —
+    // many sit at the base of big walls.
     applyTerrain(true);
     const opts = {
       center: site.lngLat,
-      zoom: site.view?.zoom ?? 13.8,
-      pitch: site.view?.pitch ?? 66,
-      bearing: site.view?.bearing ?? 24,
+      zoom: site.view?.zoom ?? 13.3,
+      pitch: site.view?.pitch ?? 55,
+      bearing: site.view?.bearing ?? 18,
       padding: desktop ? { right: 380, top: 40, bottom: 40, left: 40 } : { bottom: 300, top: 60, left: 20, right: 20 },
     };
+    map.once('moveend', () => ensureCameraClear());
     if (REDUCED_MOTION) map.jumpTo(opts);
     else map.easeTo({ ...opts, duration: 1900 });
   } else {
