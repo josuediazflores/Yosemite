@@ -83,6 +83,9 @@ export function initMap(container: HTMLElement): maplibregl.Map {
   on('fires', syncFires);
   on('selection', syncSelection);
 
+  // Dev-console handle for poking paint/layers while the proxy runs locally.
+  (window as unknown as Record<string, unknown>).yfmMap = map;
+
   return map;
 }
 
@@ -369,14 +372,50 @@ function syncSelection(): void {
   const site = state.sites.find((s) => s.id === state.selectedSiteId);
   if (site) {
     const desktop = window.matchMedia('(min-width: 720px)').matches;
+    // Focus mode owns selection now: the stat rail sits left, so the site
+    // lands center-right — matching the reference composition.
     const opts = {
       center: site.lngLat,
-      padding: desktop ? { right: 380, top: 40, bottom: 40, left: 40 } : { bottom: 300, top: 40, left: 20, right: 20 },
+      padding: desktop ? { left: 360, top: 70, bottom: 60, right: 80 } : { bottom: 300, top: 70, left: 20, right: 20 },
       zoom: Math.max(map.getZoom(), 11.5),
     };
     if (REDUCED_MOTION) map.jumpTo(opts);
     else map.easeTo({ ...opts, duration: 700 });
   }
+}
+
+// --- Focus mode styling -------------------------------------------------
+// Dark, desaturated terrain with every data overlay quieted; the site
+// markers (DOM) restyle via body.focus-mode CSS.
+
+const FOCUS_HIDDEN_LAYERS = [
+  'sighting-clusters', 'sighting-cluster-count', 'sighting-points', 'sighting-heat',
+  'quake-rings', 'fire-points', 'nifc-perim-fill', 'nifc-perim-line',
+];
+
+export function enterFocusStyle(): void {
+  if (!map.getLayer('topo')) return;
+  map.setPaintProperty('topo', 'raster-saturation', -1);
+  map.setPaintProperty('topo', 'raster-brightness-max', 0.34);
+  map.setPaintProperty('topo', 'raster-brightness-min', 0.02);
+  map.setPaintProperty('topo', 'raster-contrast', 0.25);
+  if (map.getLayer('boundary-line')) map.setPaintProperty('boundary-line', 'line-opacity', 0.15);
+  if (map.getLayer('trail-lines')) map.setPaintProperty('trail-lines', 'line-opacity', 0.08);
+  for (const id of FOCUS_HIDDEN_LAYERS) {
+    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'none');
+  }
+}
+
+export function exitFocusStyle(): void {
+  if (!map.getLayer('topo')) return;
+  map.setPaintProperty('topo', 'raster-saturation', 0);
+  map.setPaintProperty('topo', 'raster-brightness-max', 1);
+  map.setPaintProperty('topo', 'raster-brightness-min', 0);
+  map.setPaintProperty('topo', 'raster-contrast', 0);
+  if (map.getLayer('boundary-line')) map.setPaintProperty('boundary-line', 'line-opacity', 0.85);
+  if (map.getLayer('trail-lines')) map.setPaintProperty('trail-lines', 'line-opacity', 0.45);
+  // Layer visibility goes back to whatever the toggles say.
+  syncLayerVisibility();
 }
 
 function setSourceData(sourceId: string, features: FmFeature[]): void {
@@ -401,7 +440,11 @@ function syncFires(): void {
 }
 
 function syncLayerVisibility(): void {
-  const vis = (on: boolean) => (on ? 'visible' : 'none');
+  // Focus mode quiets every data overlay and shows all site dots, no matter
+  // what the (hidden) toggles say — any stray 'layers' event during focus
+  // resolves back to the focus look instead of racing it.
+  const focus = document.body.classList.contains('focus-mode');
+  const vis = (on: boolean) => (on && !focus ? 'visible' : 'none');
   const layerMap: Record<string, boolean> = {
     'sighting-clusters': state.layers.sightings,
     'sighting-cluster-count': state.layers.sightings,
@@ -417,6 +460,7 @@ function syncLayerVisibility(): void {
   }
   for (const { el } of siteMarkers.values()) {
     const isCamp = el.classList.contains('site-marker--campground');
-    el.style.display = (isCamp ? state.layers.camps : state.layers.sites) ? '' : 'none';
+    const toggled = isCamp ? state.layers.camps : state.layers.sites;
+    el.style.display = focus || toggled ? '' : 'none';
   }
 }

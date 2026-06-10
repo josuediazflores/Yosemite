@@ -6,6 +6,7 @@ import { initMap, renderSiteMarkers } from './map';
 import { initHeader } from './ui/header';
 import { initLayerControl } from './ui/layers';
 import { initPanel } from './ui/panel';
+import { initFocus } from './ui/focus';
 import { fetchGauges } from './api/usgsWater';
 import { fetchSightings } from './api/inaturalist';
 import { fetchAqi } from './api/openMeteoAqi';
@@ -33,6 +34,7 @@ async function boot(): Promise<void> {
   initHeader(document.getElementById('gauge-readout')!, document.getElementById('alert-banner')!);
   initLayerControl(document.getElementById('layer-control')!);
   initPanel(document.getElementById('panel')!);
+  initFocus(document.getElementById('focus')!);
 
   // Selecting a site triggers its per-point fetches (each cached in its module).
   on('selection', () => {
