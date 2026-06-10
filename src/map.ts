@@ -27,12 +27,14 @@ let camWrap: HTMLDivElement | null = null;
 let orbitOn = false;
 let orbitRAF = 0;
 
-// WASD camera: A/D rotate, W/S tilt — continuous while held, 3D only.
-const KEY_ACTIONS: Record<string, 'rotL' | 'rotR' | 'tiltUp' | 'tiltDown'> = {
+// WASD+QE camera: A/D rotate, W/S tilt, E/Q zoom — continuous while held, 3D only.
+const KEY_ACTIONS: Record<string, 'rotL' | 'rotR' | 'tiltUp' | 'tiltDown' | 'zoomIn' | 'zoomOut'> = {
   a: 'rotL',
   d: 'rotR',
   w: 'tiltUp',
   s: 'tiltDown',
+  e: 'zoomIn',
+  q: 'zoomOut',
 };
 const keysDown = new Set<string>();
 let keyRAF = 0;
@@ -51,8 +53,10 @@ function startKeyLoop(): void {
     last = now;
     const rot = (keysDown.has('d') ? 1 : 0) - (keysDown.has('a') ? 1 : 0);
     const tilt = (keysDown.has('w') ? 1 : 0) - (keysDown.has('s') ? 1 : 0);
+    const zoom = (keysDown.has('e') ? 1 : 0) - (keysDown.has('q') ? 1 : 0);
     if (rot) map.setBearing(map.getBearing() + rot * dt * 0.07); // ~70°/s
     if (tilt) map.setPitch(Math.min(70, Math.max(20, map.getPitch() + tilt * dt * 0.045)));
+    if (zoom) map.setZoom(map.getZoom() + zoom * dt * 0.0012); // ~1.2 levels/s, clamps to min/max
     guardAcc += dt;
     if (guardAcc > 1200) {
       guardAcc = 0;
@@ -256,6 +260,8 @@ export function initMap(container: HTMLElement): maplibregl.Map {
     'bottom-right',
   );
   map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), 'bottom-right');
+  map.getContainer().querySelector('.maplibregl-ctrl-zoom-in')?.setAttribute('title', 'Zoom in · E');
+  map.getContainer().querySelector('.maplibregl-ctrl-zoom-out')?.setAttribute('title', 'Zoom out · Q');
 
   // Camera cluster — rotate / tilt / orbit, shown only in 3D (body.terrain-on).
   const camEl = document.createElement('div');
