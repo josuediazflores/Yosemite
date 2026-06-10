@@ -11,6 +11,7 @@ import { fetchEbirdSightings } from './api/ebird';
 import { fetchSnow } from './api/cdecSnow';
 import { deriveTiogaStatus, fetchRoads } from './api/roads';
 import { fetchNpsBulletins } from './api/nps';
+import { campUrl, fetchCampAvailability } from './api/recgov';
 
 // Ouzel Console homepage (design direction B) — the layout is the design's;
 // the readings are real. Everything the mock showed as fixtures is wired to
@@ -254,6 +255,54 @@ async function loadStationAqi(): Promise<void> {
   renderStations();
 }
 
+// ---- camps · tonight -------------------------------------------------------
+
+async function loadCamps(): Promise<void> {
+  const wrap = document.getElementById('oz-camps')!;
+  const asof = document.getElementById('oz-camps-asof')!;
+  let rows;
+  try {
+    rows = await fetchCampAvailability();
+  } catch {
+    wrap.innerHTML = `<p class="ozc-error">Reservation wire didn't answer. Counts resume on the next hourly sweep.</p>`;
+    return;
+  }
+
+  const sorted = [...rows].sort(
+    (a, b) => b.availableTonight - a.availableTonight || a.name.localeCompare(b.name),
+  );
+
+  wrap.innerHTML = sorted
+    .map((c, i) => {
+      const datum =
+        c.note === 'lottery'
+          ? `<span class="campopen campopen--lottery">LOTTERY</span>`
+          : c.availableTonight > 0
+            ? `<span class="campopen campopen--open">${c.availableTonight} OPEN</span>`
+            : c.reservableTonight === 0
+              ? `<span class="campopen campopen--closed">NOT OPEN</span>`
+              : `<span class="campopen campopen--full">SOLD OUT</span>`;
+      return `
+      <a class="oz-st-row" href="${esc(campUrl(c.recId))}" target="_blank" rel="noopener"
+         aria-label="Open ${esc(c.name)} on Recreation.gov">
+        <span class="oz-st-row__idx">${String(i + 1).padStart(2, '0')}</span>
+        <img class="oz-st-row__badge" src="/icons/camp-badge.png" alt="" aria-hidden="true" />
+        <span class="oz-st-row__name">${esc(c.name)}<span>Campground</span></span>
+        <span class="oz-st-row__elev">${c.note === 'lottery' || c.reservableTonight === 0 ? '—' : `${c.reservableTonight} RESERVABLE`}</span>
+        <span class="oz-st-row__datum">${c.note === 'lottery' ? 'PER-PERSON' : c.reservableTonight === 0 ? 'SEASONAL' : c.availableTonight > 0 ? `${c.availableTonight} SITES` : 'FULL'}</span>
+        <span class="oz-st-row__chip">${datum}</span>
+      </a>`;
+    })
+    .join('');
+
+  const tonight = new Date().toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'America/Los_Angeles',
+  }).toUpperCase();
+  asof.textContent = `TONIGHT · ${tonight} · RESERVATION WIRE ${relativeTime(rows[0].observedAt).toUpperCase()}`;
+}
+
 // ---- field log -------------------------------------------------------------
 
 async function loadLog(): Promise<void> {
@@ -335,3 +384,4 @@ loadLog();
 loadBanner();
 loadPlateMeta();
 loadRoads();
+loadCamps();

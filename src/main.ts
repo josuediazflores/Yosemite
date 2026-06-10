@@ -20,6 +20,7 @@ import { fetchNifcIncidents, fetchNifcPerimeters } from './api/nifc';
 import { fetchCampgrounds } from './api/npsCampgrounds';
 import { deriveTiogaStatus, fetchRoads } from './api/roads';
 import { fetchSnow } from './api/cdecSnow';
+import { fetchCampAvailability } from './api/recgov';
 
 const GAUGE_POLL_MS = 15 * 60 * 1000;
 const HAZARD_POLL_MS = 60 * 60 * 1000;
@@ -55,6 +56,17 @@ async function boot(): Promise<void> {
   applyDeepLink();
   pollSnow();
   setInterval(pollSnow, SNOW_POLL_MS);
+  pollCampAvail();
+  setInterval(pollCampAvail, HAZARD_POLL_MS); // hourly
+}
+
+async function pollCampAvail(): Promise<void> {
+  try {
+    state.campAvail = await fetchCampAvailability();
+  } catch (err) {
+    console.error('[yfm] camp availability', err);
+  }
+  emit('camp-avail');
 }
 
 async function pollSnow(): Promise<void> {

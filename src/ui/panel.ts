@@ -2,6 +2,7 @@ import type { FmFeature, GaugeReading, ModuleId, Site } from '../model';
 import { FRESHNESS_LABEL, freshnessOf } from '../model';
 import { absoluteTime, aqiBand, formatCoords, formatMiles, formatNumber, haversineKm, relativeTime } from '../format';
 import { allFires, allSightings, on, selectSite, state } from '../state';
+import { campMatchKey } from '../api/recgov';
 
 // Site detail panel: everything around the chosen spot, each block honest
 // about its own freshness and its own failures.
@@ -27,6 +28,7 @@ export function initPanel(el: HTMLElement): void {
   on('modules', render);
   on('roads', render);
   on('snow', render);
+  on('camp-avail', render);
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && state.selectedSiteId) selectSite(null);
@@ -140,6 +142,21 @@ function aqiSection(site: Site): string {
   return `<section class="panel__section">${secTitle('Air quality · US AQI')}${body}</section>`;
 }
 
+function campAvailLine(site: Site): string {
+  const avail = state.campAvail.find((a) => a.matchKey === campMatchKey(site.name));
+  if (!avail) return '';
+  if (avail.note === 'lottery') {
+    return `<p class="campopen campopen--lottery mono">DAILY LOTTERY · CHECK RECREATION.GOV</p>`;
+  }
+  if (avail.availableTonight > 0) {
+    return `<p class="campopen campopen--open mono">${avail.availableTonight} OF ${avail.reservableTonight} SITES OPEN TONIGHT</p>`;
+  }
+  if (avail.reservableTonight === 0) {
+    return `<p class="campopen campopen--closed mono">NOT OPEN TONIGHT · NO DATES RELEASED</p>`;
+  }
+  return `<p class="campopen campopen--full mono">SOLD OUT TONIGHT · ${avail.reservableTonight} RESERVABLE</p>`;
+}
+
 function campgroundSection(site: Site): string {
   const info = state.campgroundInfo.get(site.id);
   if (!info) return '';
@@ -160,6 +177,7 @@ function campgroundSection(site: Site): string {
 
   return `<section class="panel__section">${secTitle('Campground')}
     <div class="campcard">
+      ${campAvailLine(site)}
       <div class="campcard__row mono">${esc(counts.join(' · '))}${esc(fee)}</div>
       ${amenities}
       ${season}

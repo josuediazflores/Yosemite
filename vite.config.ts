@@ -52,6 +52,13 @@ const ROUTES: ProxyRoute[] = [
     mount: '/proxy/cdec',
     build: (path) => `https://cdec.water.ca.gov/dynamicapp/req/JSONDataServlet${path.startsWith('/') ? path.slice(1) : path}`,
   },
+  {
+    // Recreation.gov public availability grid (unofficial; personal-use,
+    // gentle polling). Wants a UA; no CORS upstream.
+    mount: '/proxy/recgov',
+    build: (path) => `https://www.recreation.gov/api${path}`,
+    headers: () => ({ 'User-Agent': 'Mozilla/5.0 (Macintosh) ouzel-field-monitor/personal' }),
+  },
 ];
 
 function keyProxy(env: Record<string, string>): Plugin {

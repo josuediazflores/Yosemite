@@ -557,6 +557,24 @@ body:has(.banner:not([hidden])) .stage {
 
 .spark { display: block; }
 
+/* Campground availability (Recreation.gov wire) */
+
+.campopen {
+  margin: 0 0 7px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 3px 7px;
+  border-radius: var(--radius-xs);
+  display: inline-block;
+}
+
+.campopen--open { background: var(--sage); color: var(--ink); }
+.campopen--full { background: var(--rust); color: var(--stone); }
+.campopen--lottery { background: var(--water); color: var(--stone); }
+.campopen--closed { background: transparent; color: var(--ink-soft); border: 1px solid var(--ink-soft); }
+.ozc .campopen--closed, .ozc-footer .campopen--closed { color: var(--stone-on-ink); border-color: var(--stone-on-ink); }
+
 /* Campground */
 
 .campcard {

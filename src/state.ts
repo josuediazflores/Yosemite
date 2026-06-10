@@ -1,6 +1,7 @@
 import type {
   AirnowReading,
   AqiReading,
+  CampAvailability,
   CampgroundInfo,
   FmFeature,
   GaugeReading,
@@ -39,6 +40,7 @@ export interface AppState {
   nifcPerimeters: GeoJSON.FeatureCollection;
   ebirdSightings: FmFeature[];
   airnowBySite: Map<string, AirnowReading | 'error' | 'unavailable'>;
+  campAvail: CampAvailability[];
   roads: RoadStatus[];
   roadsError: boolean;
   snow: SnowReading[];
@@ -66,6 +68,7 @@ export const state: AppState = {
   nifcPerimeters: { type: 'FeatureCollection', features: [] },
   ebirdSightings: [],
   airnowBySite: new Map(),
+  campAvail: [],
   roads: [],
   roadsError: false,
   snow: [],
@@ -83,7 +86,8 @@ export type StateEvent =
   | 'site-data'
   | 'modules'
   | 'roads'
-  | 'snow';
+  | 'snow'
+  | 'camp-avail';
 
 /** All sightings (iNaturalist + eBird) for map + nearest-N queries. */
 export function allSightings(): FmFeature[] {

@@ -118,6 +118,17 @@ export interface RoadStatus {
   observedAt: string | null;
 }
 
+export interface CampAvailability {
+  recId: string;
+  name: string;
+  /** Normalized name for matching NPS campground sites. */
+  matchKey: string;
+  availableTonight: number;
+  reservableTonight: number;
+  note?: 'lottery';
+  observedAt: string;
+}
+
 export interface SnowReading {
   stationId: string;
   name: string;
