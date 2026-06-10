@@ -19,8 +19,10 @@ export async function fetchAirnow(lngLat: [number, number]): Promise<AirnowReadi
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.reading;
 
+  // No trailing slash: AirNow accepts either, but a trailing slash breaks
+  // Vercel's rewrite matcher in production.
   const res = await proxyFetch(
-    `/proxy/airnow/observation/latLong/current/?format=application/json` +
+    `/proxy/airnow/observation/latLong/current?format=application/json` +
       `&latitude=${lngLat[1]}&longitude=${lngLat[0]}&distance=40`,
   );
   const rows: any[] = await res.json();

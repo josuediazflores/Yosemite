@@ -65,8 +65,16 @@ export default async function handler(req, res) {
     return;
   }
 
-  const query = url.searchParams.toString();
-  const rest = `/${segments.join('/')}${query ? `?${query}` : ''}`;
+  // Vercel's rewrite merge can duplicate incoming params — keep first wins.
+  // (recreation.gov hard-rejects requests with repeated query parameters.)
+  const seen = new Set();
+  const parts = [];
+  for (const [k, v] of url.searchParams) {
+    if (seen.has(k)) continue;
+    seen.add(k);
+    parts.push(`${encodeURIComponent(k)}=${encodeURIComponent(v)}`);
+  }
+  const rest = `/${segments.join('/')}${parts.length ? `?${parts.join('&')}` : ''}`;
   try {
     const upstream = await fetch(route.build(rest, key), {
       headers: {
