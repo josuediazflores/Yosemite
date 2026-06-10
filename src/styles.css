@@ -743,6 +743,20 @@ body:has(.banner:not([hidden])) .stage {
   background: rgba(234, 230, 218, 0.85) !important;
 }
 
+/* The open panel covers the map's bottom-right corner — slide the control
+   stack (zoom, compass, camera cluster, 3D chip, attribution) clear of it. */
+@media (min-width: 720px) {
+  body:has(.panel:not([hidden])) .maplibregl-ctrl-bottom-right {
+    right: calc(var(--panel-w) + 28px);
+  }
+}
+
+@media (max-width: 719px) {
+  body:has(.panel:not([hidden])) .maplibregl-ctrl-bottom-right {
+    bottom: calc(58dvh + 8px);
+  }
+}
+
 /* 3D camera cluster — rotate / tilt / orbit, only while terrain is on */
 .yfm-cam { display: none; flex-direction: column; gap: 4px; }
 
