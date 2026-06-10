@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 
 // Dev-server key proxy. Keys live in a gitignored .env and are attached
@@ -83,5 +84,13 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   return {
     plugins: [keyProxy(env)],
+    build: {
+      rollupOptions: {
+        input: {
+          monitor: resolve(process.cwd(), 'index.html'),
+          home: resolve(process.cwd(), 'home.html'),
+        },
+      },
+    },
   };
 });

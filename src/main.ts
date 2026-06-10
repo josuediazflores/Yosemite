@@ -1,7 +1,7 @@
 import './styles.css';
 import { MissingKeyError, PARK_CENTER } from './model';
 import type { ModuleId, Site } from './model';
-import { emit, on, state } from './state';
+import { emit, on, selectSite, state } from './state';
 import { initMap, renderSiteMarkers } from './map';
 import { initHeader } from './ui/header';
 import { initLayerControl } from './ui/layers';
@@ -48,7 +48,20 @@ async function boot(): Promise<void> {
   setInterval(pollParkAlerts, PARK_ALERT_POLL_MS);
   loadSightings();
   loadEbird();
-  loadCampgrounds();
+  loadCampgrounds().then(applyDeepLink);
+  applyDeepLink();
+}
+
+// Homepage station rows deep-link as /?site=<id>; campground ids are dynamic,
+// so fall back to a name match once those load.
+function applyDeepLink(): void {
+  const param = new URLSearchParams(location.search).get('site');
+  if (!param || state.selectedSiteId) return;
+  const wanted = param.toLowerCase().replace(/-/g, ' ');
+  const site =
+    state.sites.find((s) => s.id === param) ??
+    state.sites.find((s) => s.name.toLowerCase().includes(wanted));
+  if (site) selectSite(site.id);
 }
 
 // Campgrounds become full sites: same markers, same cross-layer panel.

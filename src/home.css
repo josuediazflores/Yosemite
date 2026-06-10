@@ -1,0 +1,160 @@
+/* Ouzel Console homepage — production port of the design system's
+   ouzel/console.css (direction B), with phone adaptations added. */
+
+@import './styles.css';
+
+html { scroll-behavior: smooth; }
+a { text-decoration: none; color: inherit; }
+img { display: block; }
+::selection { background: var(--sage); color: var(--ink); }
+
+body.ozc {
+  height: auto;
+  background: var(--topo-ink), var(--ink);
+  color: var(--stone);
+  line-height: 1.5;
+}
+
+.ozc-shell { max-width: 1400px; margin: 0 auto; padding: 0 56px; }
+
+.oz-eyebrow { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--sage); }
+.oz-display { font-family: var(--font-display); font-weight: 700; letter-spacing: 0.01em; line-height: 1.06; text-wrap: balance; margin: 0; white-space: pre-line; }
+.oz-mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* ---- buttons (Button.jsx, as classes) ---- */
+.oz-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  font-family: var(--font-body); font-weight: 600; line-height: 1; white-space: nowrap;
+  border-radius: var(--radius-sm); cursor: pointer;
+  padding: 8px 15px; font-size: 13px;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.oz-btn--sm { padding: 5px 11px; font-size: 12px; }
+.oz-btn--primary { background: var(--pine); color: var(--stone); border: 1px solid var(--pine); }
+.oz-btn--primary:hover { background: var(--sage); border-color: var(--sage); color: var(--ink); }
+.oz-btn--ghost { background: transparent; color: var(--stone); border: 1px solid rgba(234, 230, 218, 0.4); }
+.oz-btn--ghost:hover { border-color: var(--sage); color: var(--sage); }
+
+/* ---- sticky nav ---- */
+.ozc-nav { position: sticky; top: 0; z-index: 50; background: rgba(32, 35, 28, 0.92); backdrop-filter: blur(6px); border-bottom: 1px solid var(--sage-line); }
+.ozc-nav__in { max-width: 1400px; margin: 0 auto; padding: 0 56px; height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.oz-brand { display: flex; align-items: center; gap: 11px; }
+.oz-brand__mark { width: 24px; height: 24px; flex: none; background: var(--sage); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.oz-brand__name { display: block; font-family: var(--font-display); font-weight: 700; font-size: 19px; letter-spacing: 0.03em; }
+.oz-brand__sub { display: block; font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.18em; margin-top: 1px; color: var(--stone-on-ink); }
+.ozc-nav__links { display: flex; align-items: center; gap: 26px; font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; }
+.ozc-nav__links a { color: rgba(234, 230, 218, 0.85); padding: 4px 2px; border-bottom: 1px solid transparent; transition: color 0.15s ease, border-color 0.15s ease; }
+.ozc-nav__links a:hover { color: var(--sage); border-bottom-color: var(--sage); }
+
+/* ---- alert banner (real NWS, hidden when quiet) ---- */
+.ozc-banner { padding: 8px 56px; background: var(--rust); color: var(--stone); font-size: 13px; font-weight: 500; }
+.ozc-banner__tag { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; border: 1px solid rgba(234, 230, 218, 0.7); padding: 1px 6px; margin-right: 8px; border-radius: var(--radius-xs); }
+
+/* ---- head ---- */
+.ozc-head { padding: 64px 0 42px; display: grid; grid-template-columns: 1fr 390px; gap: 60px; align-items: end; }
+.ozc-head h1 { font-size: clamp(44px, 5vw, 72px); color: var(--stone); margin-top: 16px; }
+.ozc-head__right { display: flex; flex-direction: column; gap: 16px; padding-bottom: 10px; }
+.ozc-head__right p { margin: 0; color: var(--stone-on-ink); font-size: 14.5px; text-wrap: pretty; }
+.ozc-head__actions { display: flex; gap: 12px; }
+
+/* ---- photo plate ---- */
+.ozc-plate { margin: 0; border: 1px solid var(--sage-line); border-radius: var(--radius-sm); overflow: hidden; }
+.ozc-plate__img { position: relative; }
+.ozc-plate__img img { width: 100%; height: 560px; object-fit: cover; }
+.ozc-plate__grade { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(32, 35, 28, 0.3), transparent 30%); }
+.ozc-plate__caption { display: flex; justify-content: space-between; gap: 16px; padding: 10px 14px; background: rgba(46, 70, 54, 0.35); border-top: 1px solid var(--sage-line); font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.16em; color: var(--stone-on-ink); }
+
+/* ---- conditions ---- */
+.ozc-cond { padding: 40px 0 8px; }
+.ozc-cond__head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; gap: 16px; }
+.ozc-cond__sweep { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; color: var(--stone-on-ink); }
+.ozc-cond__row { display: flex; gap: 14px; }
+.ozc-cond__row > * { flex: 1; }
+.ozc-pending { margin: 0; color: var(--stone-on-ink); font-size: 13px; }
+.ozc-error { margin: 0; color: var(--rust); font-size: 13px; font-weight: 500; }
+
+/* Gauge blocks reuse the monitor's .gauge styles (imported); AQI tile: */
+.ozc-aqi { display: flex; align-items: center; gap: 14px; padding: 8px 14px; border: 1px solid var(--sage-line); border-radius: var(--radius-sm); background: rgba(46, 70, 54, 0.35); }
+.ozc-aqi__badge { flex: none; width: 52px; height: 52px; display: grid; place-items: center; border-radius: var(--radius-sm); border: 1px solid rgba(32, 35, 28, 0.3); font-family: var(--font-mono); font-size: 21px; font-weight: 700; }
+.ozc-aqi__col { display: flex; flex-direction: column; gap: 3px; }
+.ozc-aqi__label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.16em; color: var(--stone-on-ink); }
+.ozc-aqi__band { font-size: 12.5px; font-weight: 600; }
+.ozc-aqi__age { font-size: 10.5px; color: var(--stone-on-ink); }
+
+/* ---- sections ---- */
+.ozc-sec { padding: 56px 0 24px; }
+.ozc-sec__head { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
+.ozc-sec__head::after { content: ''; flex: 1; border-top: 1px solid rgba(147, 168, 98, 0.22); }
+.ozc-sec h2 { font-size: clamp(28px, 3.5vw, 40px); color: var(--stone); margin: 14px 0 8px; }
+.ozc-sec__intro { max-width: 560px; color: var(--stone-on-ink); margin: 0 0 22px; text-wrap: pretty; }
+
+/* ---- stations index ---- */
+.oz-st-row { display: grid; grid-template-columns: 44px 56px 1fr 130px 170px 110px; gap: 18px; align-items: center; padding: 14px 10px; margin: 0 -10px; border-bottom: 1px solid rgba(147, 168, 98, 0.22); border-radius: var(--radius-xs); cursor: pointer; transition: background 0.15s ease; color: inherit; }
+.oz-st-row:hover { background: rgba(147, 168, 98, 0.07); }
+.oz-st-row__idx { font-family: var(--font-mono); font-size: 10px; color: var(--stone-on-ink); }
+.oz-st-row__badge { width: 40px; height: 40px; transition: transform 0.15s ease; }
+.oz-st-row:hover .oz-st-row__badge { transform: scale(1.12); }
+.oz-st-row__name { font-family: var(--font-display); font-weight: 700; font-size: 19px; color: var(--stone); }
+.oz-st-row__name span { display: block; font-family: var(--font-mono); font-weight: 400; font-size: 9px; letter-spacing: 0.14em; color: var(--stone-on-ink); margin-top: 3px; text-transform: uppercase; }
+.oz-st-row__elev, .oz-st-row__datum { font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+.oz-st-row__elev { color: var(--stone-on-ink); }
+.oz-st-row__datum { color: var(--sage); font-weight: 700; }
+.oz-st-row__chip { justify-self: end; }
+
+/* ---- field log ---- */
+.ozc-log__list { list-style: none; margin: 0; padding: 0; border-top: 1px solid rgba(147, 168, 98, 0.22); }
+.ozc-log__row { display: grid; grid-template-columns: 130px 1fr auto auto; gap: 18px; align-items: baseline; padding: 13px 10px; margin: 0 -10px; border-bottom: 1px solid rgba(147, 168, 98, 0.22); transition: background 0.15s ease; }
+.ozc-log__row:hover { background: rgba(147, 168, 98, 0.07); }
+.ozc-log__time { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; color: var(--stone-on-ink); }
+.ozc-log__name { font-weight: 600; font-size: 14.5px; color: var(--stone); }
+.ozc-log__name span { font-weight: 400; color: var(--stone-on-ink); font-size: 12.5px; }
+.ozc-log__dist { font-family: var(--font-mono); font-size: 10.5px; color: var(--sage); font-weight: 700; }
+
+/* ---- how readings work ---- */
+.ozc-how { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 26px; }
+.ozc-how__card { border: 1px solid var(--sage-line); border-radius: var(--radius-sm); padding: 18px 20px 20px; background: rgba(46, 70, 54, 0.25); display: flex; flex-direction: column; gap: 10px; }
+.ozc-how__card h3 { margin: 0; font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.18em; color: var(--sage); text-transform: uppercase; display: flex; align-items: center; gap: 10px; }
+.ozc-how__card p { margin: 0; font-size: 13px; line-height: 1.55; color: rgba(234, 230, 218, 0.85); text-wrap: pretty; }
+.chip--on-ink { color: rgba(234, 230, 218, 0.6); border: 1px solid rgba(234, 230, 218, 0.55); }
+.ozc-how__fail { margin-top: 22px; border-left: 3px solid var(--rust); background: rgba(180, 85, 44, 0.12); border-radius: var(--radius-xs); padding: 13px 16px; font-size: 13px; color: rgba(234, 230, 218, 0.9); width: fit-content; }
+.ozc-how__fail .oz-mono { color: var(--rust); font-weight: 700; font-size: 11px; letter-spacing: 0.1em; }
+
+/* ---- footer ---- */
+.ozc-footer { margin-top: 56px; border-top: 1px solid var(--sage-line); }
+.ozc-footer__in { max-width: 1400px; margin: 0 auto; padding: 44px 56px 36px; display: flex; flex-direction: column; gap: 28px; }
+.ozc-footer__top { display: flex; justify-content: space-between; align-items: flex-start; gap: 40px; }
+.ozc-footer__brandcol { display: flex; flex-direction: column; gap: 14px; }
+.ozc-footer__story { max-width: 460px; font-size: 12.5px; line-height: 1.6; color: var(--stone-on-ink); margin: 0; }
+.ozc-footer__cols { display: flex; gap: 64px; }
+.ozc-footer__col { display: flex; flex-direction: column; gap: 9px; font-size: 12.5px; }
+.ozc-footer__col strong { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.18em; color: var(--sage); text-transform: uppercase; margin-bottom: 3px; }
+.ozc-footer__col a { color: rgba(234, 230, 218, 0.85); transition: color 0.15s ease; }
+.ozc-footer__col a:hover { color: var(--sage); }
+.ozc-footer__base { display: flex; justify-content: space-between; gap: 24px; padding-top: 18px; border-top: 1px solid rgba(147, 168, 98, 0.25); font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em; color: var(--stone-on-ink); }
+
+/* ---- phones ---- */
+@media (max-width: 860px) {
+  .ozc-shell, .ozc-nav__in, .ozc-footer__in { padding-left: 20px; padding-right: 20px; }
+  .ozc-banner { padding: 8px 20px; }
+  .ozc-nav__links { display: none; }
+  .ozc-head { grid-template-columns: 1fr; gap: 24px; padding: 40px 0 30px; }
+  .ozc-head__right { padding-bottom: 0; }
+  .ozc-plate__img img { height: 320px; }
+  .ozc-plate__caption { flex-direction: column; gap: 4px; }
+  .ozc-cond__row { flex-direction: column; }
+  .ozc-cond__head { flex-direction: column; gap: 6px; align-items: flex-start; }
+  .oz-st-row { grid-template-columns: 40px 1fr auto; }
+  .oz-st-row__idx, .oz-st-row__elev { display: none; }
+  .oz-st-row__chip { display: none; }
+  .ozc-log__row { grid-template-columns: 86px 1fr auto; }
+  .ozc-log__row .chip { display: none; }
+  .ozc-how { grid-template-columns: 1fr; }
+  .ozc-footer__top { flex-direction: column; }
+  .ozc-footer__cols { gap: 32px; flex-wrap: wrap; }
+  .ozc-footer__base { flex-direction: column; gap: 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .oz-st-row, .oz-st-row__badge, .ozc-log__row, .oz-btn, .ozc-nav__links a, .ozc-footer__col a { transition: none; }
+}

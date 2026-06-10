@@ -78,7 +78,11 @@ html, body {
   align-items: center;
   gap: 12px;
   min-width: 0;
+  color: inherit;
+  text-decoration: none;
 }
+
+.console__brand:hover .console__title { color: var(--sage); }
 
 .console__mark {
   width: 26px;
