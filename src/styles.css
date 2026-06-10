@@ -244,6 +244,7 @@ body:has(.banner:not([hidden])) .stage {
 .layer-toggle__pip { width: 11px; height: 11px; flex: none; }
 
 .swatch--site { background: var(--pine); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.swatch--camp { background: var(--pine); border-radius: 1px; }
 .swatch--sighting { background: var(--sage); border-radius: 50%; }
 .swatch--heat { background: linear-gradient(135deg, var(--sage), var(--pine), var(--rust)); border-radius: 2px; }
 .swatch--fire { background: var(--rust); border-radius: 50%; }
@@ -276,6 +277,7 @@ body:has(.banner:not([hidden])) .stage {
 .site-marker--waterfall .site-marker__shape { background: var(--water); clip-path: polygon(50% 100%, 100% 0, 0 0); }
 .site-marker--meadow .site-marker__shape { background: var(--sage); clip-path: circle(46%); }
 .site-marker--trailhead .site-marker__shape { background: var(--ink); clip-path: polygon(0 0, 100% 50%, 0 100%); }
+.site-marker--campground .site-marker__shape { background: var(--pine); clip-path: none; width: 9px; height: 9px; border-radius: 1px; }
 
 .site-marker--selected {
   border-color: var(--rust);
@@ -442,6 +444,43 @@ body:has(.banner:not([hidden])) .stage {
 .gaugecard__dist { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-soft); }
 .gaugecard__row--data { margin-top: 5px; font-size: 12px; flex-wrap: wrap; }
 .gaugecard__row--data .mono { color: var(--water); font-weight: 700; }
+
+/* Campground */
+
+.campcard {
+  border: 1px solid rgba(46, 70, 54, 0.35);
+  border-left: 3px solid var(--pine);
+  border-radius: 2px;
+  padding: 9px 11px;
+  background: rgba(46, 70, 54, 0.05);
+}
+
+.campcard__row { font-size: 11.5px; color: var(--pine); font-weight: 700; }
+
+.campcard__amenities { margin-top: 7px; }
+
+.amenity {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  margin: 0 4px 4px 0;
+  border: 1px solid rgba(46, 70, 54, 0.45);
+  border-radius: 2px;
+  color: var(--pine);
+}
+
+.campcard__season { margin: 6px 0 0; font-size: 11.5px; color: var(--ink-soft); }
+
+.campcard__link {
+  display: inline-block;
+  margin-top: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--water);
+}
 
 /* Alerts */
 

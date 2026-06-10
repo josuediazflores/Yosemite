@@ -17,6 +17,7 @@ import { fetchFirmsDetections } from './api/firms';
 import { fetchAirnow } from './api/airnow';
 import { fetchEbirdSightings } from './api/ebird';
 import { fetchNifcIncidents, fetchNifcPerimeters } from './api/nifc';
+import { fetchCampgrounds } from './api/npsCampgrounds';
 
 const GAUGE_POLL_MS = 15 * 60 * 1000;
 const HAZARD_POLL_MS = 60 * 60 * 1000;
@@ -47,6 +48,21 @@ async function boot(): Promise<void> {
   setInterval(pollParkAlerts, PARK_ALERT_POLL_MS);
   loadSightings();
   loadEbird();
+  loadCampgrounds();
+}
+
+// Campgrounds become full sites: same markers, same cross-layer panel.
+// Without an NPS key they're simply absent (the alerts module already
+// reports NPS as dormant), so no extra messaging needed here.
+async function loadCampgrounds(): Promise<void> {
+  try {
+    const records = await fetchCampgrounds();
+    for (const r of records) state.campgroundInfo.set(r.site.id, r.info);
+    state.sites.push(...records.map((r) => r.site));
+    renderSiteMarkers(records.map((r) => r.site));
+  } catch (err) {
+    if (!(err instanceof MissingKeyError)) console.error('[yfm] campgrounds', err);
+  }
 }
 
 async function pollGauges(): Promise<void> {

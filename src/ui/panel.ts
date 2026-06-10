@@ -54,11 +54,12 @@ function render(): void {
       <div>
         <span class="panel__kind">${esc(site.kind)}</span>
         <h2 class="panel__name">${esc(site.name)}</h2>
-        <p class="panel__coords">${formatCoords(site.lngLat)} · ${formatNumber(site.elevFt)} FT</p>
+        <p class="panel__coords">${formatCoords(site.lngLat)}${site.elevFt != null ? ` · ${formatNumber(site.elevFt)} FT` : ''}</p>
       </div>
       <button class="panel__close" type="button" data-close aria-label="Close site details">✕</button>
     </header>
     <p class="panel__blurb">${esc(site.blurb)}</p>
+    ${site.kind === 'campground' ? campgroundSection(site) : ''}
     ${aqiSection(site)}
     ${gaugeSection(site)}
     ${alertSection(site)}
@@ -113,6 +114,33 @@ function aqiSection(site: Site): string {
       </div>`;
   }
   return `<section class="panel__section"><h3>Air quality · US AQI</h3>${body}</section>`;
+}
+
+function campgroundSection(site: Site): string {
+  const info = state.campgroundInfo.get(site.id);
+  if (!info) return '';
+
+  const counts: string[] = [];
+  if (info.totalSites) counts.push(`${info.totalSites} sites`);
+  if (info.reservable) counts.push(`${info.reservable} reservable`);
+  if (info.firstCome) counts.push(`${info.firstCome} first-come`);
+  const fee = info.feeCost ? ` · from ${info.feeCost}/night` : '';
+
+  const amenities = info.amenities.length
+    ? `<div class="campcard__amenities">${info.amenities.map((a) => `<span class="amenity">${esc(a)}</span>`).join('')}</div>`
+    : '';
+  const season = info.season ? `<p class="campcard__season">${esc(info.season)}</p>` : '';
+  const reserve = info.reserveUrl
+    ? `<a class="campcard__link" href="${esc(info.reserveUrl)}" target="_blank" rel="noopener">Reservations & details ↗</a>`
+    : '';
+
+  return `<section class="panel__section"><h3>Campground</h3>
+    <div class="campcard">
+      <div class="campcard__row mono">${esc(counts.join(' · '))}${esc(fee)}</div>
+      ${amenities}
+      ${season}
+      ${reserve}
+    </div></section>`;
 }
 
 const MODULE_LABEL: Record<ModuleId, string> = {

@@ -1,6 +1,7 @@
 import type {
   AirnowReading,
   AqiReading,
+  CampgroundInfo,
   FmFeature,
   GaugeReading,
   LayerId,
@@ -30,6 +31,7 @@ export interface AppState {
   // Phase 2
   modules: Record<ModuleId, ModuleStatus>;
   npsBulletins: NpsBulletin[];
+  campgroundInfo: Map<string, CampgroundInfo>;
   firmsDetections: FmFeature[];
   nifcIncidents: FmFeature[];
   nifcPerimeters: GeoJSON.FeatureCollection;
@@ -40,7 +42,7 @@ export interface AppState {
 export const state: AppState = {
   sites: [],
   selectedSiteId: null,
-  layers: { sites: true, sightings: true, fire: true, hazards: true, heat: false },
+  layers: { sites: true, camps: true, sightings: true, fire: true, hazards: true, heat: false },
   gauges: [],
   gaugesError: false,
   sightings: [],
@@ -52,6 +54,7 @@ export const state: AppState = {
   alertsBySite: new Map(),
   modules: { nps: 'pending', firms: 'pending', airnow: 'pending', ebird: 'pending' },
   npsBulletins: [],
+  campgroundInfo: new Map(),
   firmsDetections: [],
   nifcIncidents: [],
   nifcPerimeters: { type: 'FeatureCollection', features: [] },

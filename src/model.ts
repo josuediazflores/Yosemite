@@ -18,7 +18,7 @@ export type SourceId =
   | 'ebird'
   | 'nps';
 
-export type LayerId = 'sites' | 'sightings' | 'fire' | 'hazards' | 'heat';
+export type LayerId = 'sites' | 'camps' | 'sightings' | 'fire' | 'hazards' | 'heat';
 
 /** Keyed modules proxied through the dev server; 'missing-key' = no .env entry yet. */
 export type ModuleStatus = 'pending' | 'ok' | 'missing-key' | 'error';
@@ -47,10 +47,20 @@ export interface FmFeature {
 export interface Site {
   id: string;
   name: string;
-  kind: 'viewpoint' | 'waterfall' | 'meadow' | 'trailhead';
+  kind: 'viewpoint' | 'waterfall' | 'meadow' | 'trailhead' | 'campground';
   lngLat: [number, number];
-  elevFt: number;
+  elevFt: number | null;
   blurb: string;
+}
+
+export interface CampgroundInfo {
+  totalSites: number | null;
+  reservable: number;
+  firstCome: number;
+  season: string | null;
+  feeCost: string | null;
+  amenities: string[];
+  reserveUrl: string | null;
 }
 
 export interface GaugeReading {

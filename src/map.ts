@@ -416,6 +416,7 @@ function syncLayerVisibility(): void {
     if (map.getLayer(layerId)) map.setLayoutProperty(layerId, 'visibility', vis(visible));
   }
   for (const { el } of siteMarkers.values()) {
-    el.style.display = state.layers.sites ? '' : 'none';
+    const isCamp = el.classList.contains('site-marker--campground');
+    el.style.display = (isCamp ? state.layers.camps : state.layers.sites) ? '' : 'none';
   }
 }

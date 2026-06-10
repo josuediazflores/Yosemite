@@ -53,7 +53,7 @@ scheduled fetch-and-freeze job or a serverless function with the same paths.
 
 | Module | Adds | Key signup |
 |---|---|---|
-| NPS | Official park bulletins (closures, danger) in banner + panel | nps.gov/subjects/developer |
+| NPS | Park bulletins (banner + panel) and the campgrounds layer (15 campgrounds: sites, amenities, season, fees) | nps.gov/subjects/developer |
 | FIRMS | VIIRS thermal detections on the fire layer (hourly) | firms.modaps.eosdis.nasa.gov/api/map_key |
 | AirNow | Observed AQI, outranks the Open-Meteo model in the panel | docs.airnowapi.org/account/request |
 | eBird | Recent bird observations merged into sightings | ebird.org/api/keygen |
