@@ -3,6 +3,7 @@ import type {
   AqiReading,
   CampAvailability,
   CampgroundInfo,
+  FieldCam,
   FmFeature,
   GaugeReading,
   LayerId,
@@ -41,6 +42,7 @@ export interface AppState {
   ebirdSightings: FmFeature[];
   airnowBySite: Map<string, AirnowReading | 'error' | 'unavailable'>;
   campAvail: CampAvailability[];
+  fieldCams: FieldCam[];
   roads: RoadStatus[];
   roadsError: boolean;
   snow: SnowReading[];
@@ -69,6 +71,7 @@ export const state: AppState = {
   ebirdSightings: [],
   airnowBySite: new Map(),
   campAvail: [],
+  fieldCams: [],
   roads: [],
   roadsError: false,
   snow: [],
@@ -87,7 +90,8 @@ export type StateEvent =
   | 'modules'
   | 'roads'
   | 'snow'
-  | 'camp-avail';
+  | 'camp-avail'
+  | 'cams';
 
 /** All sightings (iNaturalist + eBird) for map + nearest-N queries. */
 export function allSightings(): FmFeature[] {

@@ -120,6 +120,15 @@ export interface RoadStatus {
   observedAt: string | null;
 }
 
+export interface FieldCam {
+  id: string;
+  title: string;
+  lngLat: [number, number] | null;
+  img: string | null;
+  streaming: boolean;
+  watchUrl: string;
+}
+
 export interface CampAvailability {
   recId: string;
   name: string;

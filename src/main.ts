@@ -18,6 +18,7 @@ import { fetchAirnow } from './api/airnow';
 import { fetchEbirdSightings } from './api/ebird';
 import { fetchNifcIncidents, fetchNifcPerimeters } from './api/nifc';
 import { fetchCampgrounds } from './api/npsCampgrounds';
+import { fetchFieldCams } from './api/npsWebcams';
 import { deriveTiogaStatus, fetchRoads } from './api/roads';
 import { fetchSnow } from './api/cdecSnow';
 import { fetchCampAvailability } from './api/recgov';
@@ -58,6 +59,17 @@ async function boot(): Promise<void> {
   setInterval(pollSnow, SNOW_POLL_MS);
   pollCampAvail();
   setInterval(pollCampAvail, HAZARD_POLL_MS); // hourly
+  loadFieldCams();
+}
+
+// Camera roster is static-ish — once per session. Dormant without the NPS key.
+async function loadFieldCams(): Promise<void> {
+  try {
+    state.fieldCams = await fetchFieldCams();
+    emit('cams');
+  } catch (err) {
+    if (!(err instanceof MissingKeyError)) console.error('[yfm] field cams', err);
+  }
 }
 
 async function pollCampAvail(): Promise<void> {

@@ -1,18 +1,10 @@
+import type { FieldCam } from '../model';
 import { proxyFetch } from './proxyFetch';
 
 // Park field cameras via the NPS API. We render honest *plates* — official
 // representative frames + true positions — and link out to the source player.
 // Live frames aren't redistributable (NPS's embed is JS-walled and the
 // Conservancy runs its own players), so the plates never fake liveness.
-
-export interface FieldCam {
-  id: string;
-  title: string;
-  lngLat: [number, number] | null;
-  img: string | null;
-  streaming: boolean;
-  watchUrl: string;
-}
 
 // The four marquee cams are operated with Yosemite Conservancy — their
 // working players live on yosemite.org, not the NPS page.

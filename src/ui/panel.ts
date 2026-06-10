@@ -29,6 +29,7 @@ export function initPanel(el: HTMLElement): void {
   on('roads', render);
   on('snow', render);
   on('camp-avail', render);
+  on('cams', render);
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && state.selectedSiteId) selectSite(null);
@@ -84,6 +85,7 @@ function render(): void {
     </header>
     <p class="panel__blurb">${esc(site.blurb)}</p>
     ${site.kind === 'campground' ? campgroundSection(site) : ''}
+    ${camSection(site)}
     ${aqiSection(site)}
     ${gaugeSection(site)}
     ${snowSection(site)}
@@ -140,6 +142,33 @@ function aqiSection(site: Site): string {
       </div>`;
   }
   return `<section class="panel__section">${secTitle('Air quality · US AQI')}${body}</section>`;
+}
+
+// A camera counts as "here" within ~2 miles of the site.
+const CAM_RADIUS_KM = 3.2;
+
+function camSection(site: Site): string {
+  if (!state.fieldCams.length) return '';
+  const near = state.fieldCams
+    .filter((c) => c.lngLat)
+    .map((c) => ({ c, km: haversineKm(site.lngLat, c.lngLat!) }))
+    .filter((x) => x.km <= CAM_RADIUS_KM)
+    .sort((a, b) => a.km - b.km)[0];
+  if (!near) return '';
+
+  const frame = near.c.img
+    ? `<img class="fieldcam__img" src="${esc(near.c.img)}" alt="Reference frame from the ${esc(near.c.title)} camera" loading="lazy" />`
+    : '';
+  return `<section class="panel__section">${secTitle('Field camera')}
+    <a class="fieldcam" href="${esc(near.c.watchUrl)}" target="_blank" rel="noopener"
+       aria-label="Open the ${esc(near.c.title)} camera at its source">
+      ${frame}
+      <span class="fieldcam__row">
+        <span class="fieldcam__name">${esc(near.c.title)}</span>
+        <span class="fieldcam__dist mono">${formatMiles(near.km)} away</span>
+      </span>
+      <span class="fieldcam__watch mono">${near.c.streaming ? 'WATCH LIVE ↗' : 'OPEN CAM ↗'}</span>
+    </a></section>`;
 }
 
 function campAvailLine(site: Site): string {
