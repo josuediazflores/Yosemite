@@ -27,6 +27,63 @@ let camWrap: HTMLDivElement | null = null;
 let orbitOn = false;
 let orbitRAF = 0;
 
+// WASD camera: A/D rotate, W/S tilt — continuous while held, 3D only.
+const KEY_ACTIONS: Record<string, 'rotL' | 'rotR' | 'tiltUp' | 'tiltDown'> = {
+  a: 'rotL',
+  d: 'rotR',
+  w: 'tiltUp',
+  s: 'tiltDown',
+};
+const keysDown = new Set<string>();
+let keyRAF = 0;
+
+function startKeyLoop(): void {
+  if (keyRAF) return;
+  let last = performance.now();
+  let guardAcc = 0;
+  const step = (now: number) => {
+    if (!keysDown.size || !terrainOn) {
+      keyRAF = 0;
+      ensureCameraClear();
+      return;
+    }
+    const dt = Math.min(now - last, 100);
+    last = now;
+    const rot = (keysDown.has('d') ? 1 : 0) - (keysDown.has('a') ? 1 : 0);
+    const tilt = (keysDown.has('w') ? 1 : 0) - (keysDown.has('s') ? 1 : 0);
+    if (rot) map.setBearing(map.getBearing() + rot * dt * 0.07); // ~70°/s
+    if (tilt) map.setPitch(Math.min(70, Math.max(20, map.getPitch() + tilt * dt * 0.045)));
+    guardAcc += dt;
+    if (guardAcc > 1200) {
+      guardAcc = 0;
+      const t = (map as unknown as { transform: { getCameraLngLat(): maplibregl.LngLat; getCameraAltitude(): number } }).transform;
+      const ground = map.queryTerrainElevation(t.getCameraLngLat());
+      if (ground != null && t.getCameraAltitude() - ground < 60) {
+        map.setPitch(Math.max(42, map.getPitch() - 8));
+      }
+    }
+    keyRAF = requestAnimationFrame(step);
+  };
+  keyRAF = requestAnimationFrame(step);
+}
+
+function initWasd(): void {
+  document.addEventListener('keydown', (e) => {
+    const key = e.key.toLowerCase();
+    if (!(key in KEY_ACTIONS) || !terrainOn || e.metaKey || e.ctrlKey || e.altKey) return;
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
+    e.preventDefault();
+    if (!keysDown.has(key)) {
+      stopOrbit();
+      keysDown.add(key);
+      startKeyLoop();
+    }
+  });
+  document.addEventListener('keyup', (e) => keysDown.delete(e.key.toLowerCase()));
+  window.addEventListener('blur', () => keysDown.clear());
+}
+
 function stopOrbit(): void {
   if (!orbitOn && !orbitRAF) return;
   orbitOn = false;
@@ -207,11 +264,11 @@ export function initMap(container: HTMLElement): maplibregl.Map {
       onAdd: () => {
         camEl.className = 'maplibregl-ctrl yfm-cam';
         camEl.innerHTML = `
-          <button type="button" data-cam="rot-l" aria-label="Rotate left">⟲</button>
-          <button type="button" data-cam="rot-r" aria-label="Rotate right">⟳</button>
-          <button type="button" data-cam="flatter" aria-label="Tilt flatter">↥</button>
-          <button type="button" data-cam="steeper" aria-label="Tilt steeper">↧</button>
-          <button type="button" data-cam="orbit" aria-label="Orbit the site" aria-pressed="false">ORBIT</button>`;
+          <button type="button" data-cam="rot-l" aria-label="Rotate left (A)" title="Rotate left · A">⟲</button>
+          <button type="button" data-cam="rot-r" aria-label="Rotate right (D)" title="Rotate right · D">⟳</button>
+          <button type="button" data-cam="flatter" aria-label="Tilt flatter (S)" title="Tilt flatter · S">↥</button>
+          <button type="button" data-cam="steeper" aria-label="Tilt steeper (W)" title="Tilt steeper · W">↧</button>
+          <button type="button" data-cam="orbit" aria-label="Orbit the site" aria-pressed="false" title="Slow spin around the site">ORBIT</button>`;
         camEl.addEventListener('click', (e) => {
           const btn = (e.target as HTMLElement).closest('button');
           if (!btn) return;
@@ -243,6 +300,7 @@ export function initMap(container: HTMLElement): maplibregl.Map {
   for (const ev of ['mousedown', 'touchstart', 'wheel'] as const) {
     map.on(ev, () => stopOrbit());
   }
+  initWasd();
 
   // 2D/3D toggle chip — manual terrain mode without needing a selection.
   const tdEl = document.createElement('button');
