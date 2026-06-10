@@ -58,7 +58,7 @@ function keyProxy(env: Record<string, string>): Plugin {
           try {
             const upstream = await fetch(route.build(req.url ?? '/', key), {
               headers: {
-                'User-Agent': 'yosemite-field-monitor (local dev tool)',
+                'User-Agent': 'ouzel-yosemite-field-monitor (local dev tool)',
                 ...(route.headers?.(key) ?? {}),
               },
             });

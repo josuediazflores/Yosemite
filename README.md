@@ -1,8 +1,12 @@
-# Yosemite Field Monitor
+# Ouzel — Yosemite Field Monitor
 
 Pick a spot in Yosemite and see what's around it right now: air quality, recent
 wildlife sightings, live river conditions, and fire/weather/seismic hazards,
 layered on a USGS topographic map. Every reading is honest about how fresh it is.
+
+Named for the water ouzel (American dipper) — John Muir's favorite bird, which
+lives in the Merced's whitewater at Happy Isles and monitors the river all day,
+every season, right where gauge 11264500 takes its readings.
 
 ## Run
 
