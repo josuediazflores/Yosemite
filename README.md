@@ -16,8 +16,25 @@ npm run dev      # http://localhost:5173
 npm run build    # static output in dist/
 ```
 
-Pure static client app — no backend, no API keys. Every Phase 1 source is
-keyless and CORS-friendly, so the browser calls them directly.
+Pure static client app — keyless sources are called directly from the
+browser; keyed and CORS-blocked sources ride a tiny proxy (the Vite dev
+server locally, a Vercel function in production). Keys never ship to clients.
+
+## Deploy (Vercel)
+
+The repo is deploy-ready: `vercel.json` builds the static site and rewrites
+`/proxy/*` to `api/proxy/[...path].js`, a serverless mirror of the dev proxy.
+
+1. vercel.com → Add New → Project → import `josuediazflores/Yosemite`
+   (framework auto-detects Vite; the included `vercel.json` handles the rest).
+2. In Project → Settings → Environment Variables, add the four keys from your
+   local `.env`: `NPS_API_KEY`, `FIRMS_MAP_KEY`, `AIRNOW_API_KEY`,
+   `EBIRD_API_KEY` (Production + Preview).
+3. Deploy. Missing keys don't break anything — those modules go dormant,
+   exactly as in dev.
+
+Proxy responses carry `s-maxage` cache headers so Vercel's edge absorbs
+repeat traffic instead of the upstream sources.
 
 ## Data sources
 
