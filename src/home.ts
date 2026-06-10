@@ -231,7 +231,7 @@ function renderStations(): void {
   wrap.innerHTML = STATIONS.map((s, i) => {
     const d = datums.get(s.site);
     return `
-    <a class="oz-st-row" href="/?site=${esc(s.site)}" aria-label="Open ${esc(s.name)} in the monitor">
+    <a class="oz-st-row" href="/monitor.html?site=${esc(s.site)}" aria-label="Open ${esc(s.name)} in the monitor">
       <span class="oz-st-row__idx">${String(i + 1).padStart(2, '0')}</span>
       <img class="oz-st-row__badge" src="/icons/${esc(s.badge)}-badge.png" alt="" aria-hidden="true" />
       <span class="oz-st-row__name">${esc(s.name)}<span>${esc(s.kind)}</span></span>

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Ouzel — pick a spot in Yosemite and see what's around it right now: air quality, wildlife sightings, river conditions, and hazards on a topographic map." />
+    <title>Ouzel · Yosemite Field Monitor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header class="console">
+      <a class="console__brand" href="/" aria-label="Ouzel home">
+        <span class="console__mark" aria-hidden="true"></span>
+        <div>
+          <p class="console__title">Ouzel</p>
+          <p class="console__sub mono">YOSEMITE FIELD MONITOR · 37.8400°N 119.5400°W</p>
+        </div>
+      </a>
+      <div id="gauge-readout" aria-live="polite"></div>
+    </header>
+    <div id="alert-banner" class="banner" role="status" hidden></div>
+    <main class="stage">
+      <div id="map" aria-label="Topographic map of Yosemite National Park"></div>
+      <button id="layer-fab" class="layer-fab" type="button" aria-expanded="false" aria-controls="layer-control" aria-label="Show layer toggles">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><g fill="none" stroke="#2E4636" stroke-width="1.5" stroke-linejoin="round"><path d="M8 1.5 14.5 5 8 8.5 1.5 5Z" fill="#2E4636" stroke="none"/><path d="m1.5 8.5 6.5 3.5 6.5-3.5"/><path d="m1.5 11.5 6.5 3.5 6.5-3.5"/></g></svg>
+      </button>
+      <fieldset id="layer-control" class="layer-control"></fieldset>
+      <aside id="panel" class="panel" aria-label="Site details" tabindex="-1" hidden></aside>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

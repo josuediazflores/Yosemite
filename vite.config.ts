@@ -105,8 +105,8 @@ export default defineConfig(({ mode }) => {
     build: {
       rollupOptions: {
         input: {
-          monitor: resolve(process.cwd(), 'index.html'),
-          home: resolve(process.cwd(), 'home.html'),
+          monitor: resolve(process.cwd(), 'monitor.html'),
+          home: resolve(process.cwd(), 'index.html'),
         },
       },
     },
