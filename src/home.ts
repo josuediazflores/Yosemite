@@ -12,6 +12,7 @@ import { fetchSnow } from './api/cdecSnow';
 import { deriveTiogaStatus, fetchRoads } from './api/roads';
 import { fetchNpsBulletins } from './api/nps';
 import { campUrl, fetchCampAvailability } from './api/recgov';
+import { fetchFieldCams } from './api/npsWebcams';
 
 // Ouzel Console homepage (design direction B) — the layout is the design's;
 // the readings are real. Everything the mock showed as fixtures is wired to
@@ -255,6 +256,51 @@ async function loadStationAqi(): Promise<void> {
   renderStations();
 }
 
+// ---- plates · field cameras --------------------------------------------------
+
+function camCoords(lngLat: [number, number] | null): string {
+  if (!lngLat) return 'POSITION UNPUBLISHED';
+  const [lng, lat] = lngLat;
+  return `${Math.abs(lat).toFixed(4)}°N ${Math.abs(lng).toFixed(4)}°W`;
+}
+
+async function loadPlates(): Promise<void> {
+  const rail = document.getElementById('oz-plates')!;
+  let cams;
+  try {
+    cams = await fetchFieldCams();
+  } catch (err) {
+    if (err instanceof MissingKeyError) {
+      rail.innerHTML = `<p class="ozc-pending">Field cameras sleep until the NPS key lands in .env.</p>`;
+    } else {
+      rail.innerHTML = `<p class="ozc-error">Camera network didn't answer. Reload to retry.</p>`;
+    }
+    return;
+  }
+  if (!cams.length) {
+    rail.innerHTML = `<p class="ozc-pending">No active cameras reported by NPS right now.</p>`;
+    return;
+  }
+
+  rail.innerHTML = cams
+    .map((c, i) => {
+      const frame = c.img
+        ? `<img src="${esc(c.img)}" alt="Reference frame from the ${esc(c.title)} camera" loading="lazy" />`
+        : `<span class="ozc-plate__none" aria-hidden="true">∅</span>`;
+      return `
+      <a class="ozc-plate ozc-plate--cam" href="${esc(c.watchUrl)}" target="_blank" rel="noopener"
+         aria-label="Open the ${esc(c.title)} camera at its source">
+        <span class="ozc-plate__img ozc-plate__img--cam">${frame}<span class="ozc-plate__grade" aria-hidden="true"></span></span>
+        <span class="ozc-plate__caption">
+          <span>PLATE ${String(i + 2).padStart(2, '0')} · ${esc(c.title.toUpperCase())}</span>
+          <span>${esc(camCoords(c.lngLat))}</span>
+        </span>
+        <span class="ozc-plate__watch">${c.streaming ? 'WATCH LIVE ↗' : 'OPEN CAM ↗'}</span>
+      </a>`;
+    })
+    .join('');
+}
+
 // ---- camps · tonight -------------------------------------------------------
 
 async function loadCamps(): Promise<void> {
@@ -385,3 +431,4 @@ loadBanner();
 loadPlateMeta();
 loadRoads();
 loadCamps();
+loadPlates();

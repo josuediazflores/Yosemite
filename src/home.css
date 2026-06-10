@@ -64,6 +64,52 @@ body.ozc {
 .ozc-plate__grade { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(32, 35, 28, 0.3), transparent 30%); }
 .ozc-plate__caption { display: flex; justify-content: space-between; gap: 16px; padding: 10px 14px; background: rgba(46, 70, 54, 0.35); border-top: 1px solid var(--sage-line); font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.16em; color: var(--stone-on-ink); }
 
+/* ---- plates rail (field cameras) ---- */
+.ozc-sec--plates { padding-top: 44px; }
+
+.ozc-platerail {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.ozc-plate--cam {
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.ozc-plate--cam:hover { border-color: var(--sage); }
+
+.ozc-plate__img--cam { display: block; }
+.ozc-plate__img--cam img { height: 190px; }
+
+.ozc-plate__none {
+  display: grid;
+  place-items: center;
+  height: 190px;
+  font-family: var(--font-mono);
+  font-size: 24px;
+  color: var(--stone-on-ink);
+  background: var(--topo-ink), rgba(46, 70, 54, 0.25);
+}
+
+.ozc-plate--cam .ozc-plate__caption { flex-direction: column; gap: 3px; align-items: flex-start; }
+
+.ozc-plate__watch {
+  display: block;
+  padding: 7px 14px;
+  border-top: 1px solid var(--sage-line);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--sage);
+}
+
+.ozc-plate--cam:hover .ozc-plate__watch { color: var(--stone); }
+
 /* ---- conditions ---- */
 .ozc-cond { padding: 40px 0 8px; }
 .ozc-cond__head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; gap: 16px; }
