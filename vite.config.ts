@@ -7,7 +7,8 @@ import { defineConfig, loadEnv, type Plugin } from 'vite';
 // serverless function with the same path contract — the client doesn't change.
 interface ProxyRoute {
   mount: string;
-  envVar: string;
+  /** Omitted = keyless passthrough; the proxy is just a CORS relay. */
+  envVar?: string;
   build: (path: string, key: string) => string;
   headers?: (key: string) => Record<string, string>;
 }
@@ -41,6 +42,16 @@ const ROUTES: ProxyRoute[] = [
     build: (_path, key) =>
       `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${key}/VIIRS_NOAA20_NRT/${PARK_FIRMS_BBOX}/2`,
   },
+  {
+    // Caltrans highway conditions — keyless, but no CORS headers upstream.
+    mount: '/proxy/roads',
+    build: (path) => `https://roads.dot.ca.gov/roadscell.php${path.startsWith('/') ? path.slice(1) : path}`,
+  },
+  {
+    // CDEC snow sensors — keyless, no CORS headers upstream.
+    mount: '/proxy/cdec',
+    build: (path) => `https://cdec.water.ca.gov/dynamicapp/req/JSONDataServlet${path.startsWith('/') ? path.slice(1) : path}`,
+  },
 ];
 
 function keyProxy(env: Record<string, string>): Plugin {
@@ -49,8 +60,8 @@ function keyProxy(env: Record<string, string>): Plugin {
     configureServer(server) {
       for (const route of ROUTES) {
         server.middlewares.use(route.mount, async (req, res) => {
-          const key = env[route.envVar];
-          if (!key) {
+          const key = route.envVar ? env[route.envVar] : '';
+          if (route.envVar && !key) {
             res.statusCode = 503;
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({ error: 'missing-key', envVar: route.envVar }));

@@ -25,6 +25,8 @@ export function initPanel(el: HTMLElement): void {
   on('fires', render);
   on('park-alerts', render);
   on('modules', render);
+  on('roads', render);
+  on('snow', render);
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && state.selectedSiteId) selectSite(null);
@@ -82,8 +84,10 @@ function render(): void {
     ${site.kind === 'campground' ? campgroundSection(site) : ''}
     ${aqiSection(site)}
     ${gaugeSection(site)}
+    ${snowSection(site)}
     ${alertSection(site)}
     ${bulletinSection()}
+    ${roadsSection()}
     ${hazardSection(site)}
     ${sightingsSection(site)}
     <footer class="panel__credits">
@@ -238,6 +242,71 @@ function gaugeSection(site: Site): string {
         ${sparkCol}
       </div>
     </div></section>`;
+}
+
+function snowSection(site: Site): string {
+  if (state.snowError && !state.snow.length) {
+    return `<section class="panel__section">${secTitle('Snowpack')}
+      <p class="panel__error">Snow sensors didn't answer. Next sweep within 6 hours.</p></section>`;
+  }
+  if (!state.snow.length) {
+    return `<section class="panel__section">${secTitle('Snowpack')}
+      <p class="panel__pending">Contacting snow sensors…</p></section>`;
+  }
+  const nearest = state.snow.reduce((best, s) =>
+    haversineKm(site.lngLat, s.lngLat) < haversineKm(site.lngLat, best.lngLat) ? s : best,
+  );
+  const km = haversineKm(site.lngLat, nearest.lngLat);
+
+  const melted = (nearest.sweIn ?? 0) <= 0 && (nearest.depthIn ?? 0) <= 0;
+  const reading = melted
+    ? 'Sensors read zero — melted out for the season.'
+    : [
+        nearest.sweIn != null ? `${nearest.sweIn.toFixed(2)} in SWE` : '',
+        nearest.depthIn != null ? `${Math.round(nearest.depthIn)} in depth` : '',
+      ].filter(Boolean).join(' · ');
+
+  return `<section class="panel__section">${secTitle('Snowpack')}
+    <div class="gaugecard gaugecard--snow">
+      <div class="gaugecard__row">
+        <span class="gaugecard__name">${esc(nearest.name)} · ${formatNumber(nearest.elevFt)} FT</span>
+        <span class="gaugecard__dist">${formatMiles(km)} away</span>
+      </div>
+      <div class="gaugecard__body">
+        <span class="gaugecard__readcol">
+          <span class="gaugecard__reading mono">${esc(reading)}</span>
+          <span class="gaugecard__sub">${chip(nearest.observedAt)} posted ${esc(relativeTime(nearest.observedAt))}</span>
+        </span>
+      </div>
+    </div></section>`;
+}
+
+const ROAD_LABEL: Record<string, string> = { open: 'OPEN', chains: 'CHAINS', closed: 'CLOSED' };
+
+function roadsSection(): string {
+  if (state.roadsError && !state.roads.length) {
+    return `<section class="panel__section">${secTitle('Roads & access')}
+      <p class="panel__error">Caltrans didn't answer. Next sweep in 20 min — or call 1-800-427-7623.</p></section>`;
+  }
+  if (!state.roads.length) {
+    return `<section class="panel__section">${secTitle('Roads & access')}
+      <p class="panel__pending">Checking the highway wire…</p></section>`;
+  }
+  const rows = state.roads
+    .map(
+      (r) => `
+      <li class="roadrow">
+        <span class="roadrow__name mono">${esc(r.corridor)}</span>
+        <span class="roadchip roadchip--${esc(r.status)}">${ROAD_LABEL[r.status]}</span>
+        <span class="roadrow__summary">${esc(r.summary)}</span>
+      </li>`,
+    )
+    .join('');
+  const asOf = state.roads[0]?.observedAt
+    ? `<p class="roadrow__asof mono">CALTRANS WIRE · ${esc(relativeTime(state.roads[0].observedAt).toUpperCase())}</p>`
+    : '';
+  return `<section class="panel__section">${secTitle('Roads & access')}
+    <ul class="roadlist">${rows}</ul>${asOf}</section>`;
 }
 
 function alertSection(site: Site): string {

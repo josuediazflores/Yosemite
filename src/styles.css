@@ -594,6 +594,45 @@ body:has(.banner:not([hidden])) .stage {
   color: var(--water);
 }
 
+/* Snow card variant + roads */
+
+.gaugecard--snow { border-left-color: var(--sage); background: var(--wash-pine); }
+.gaugecard--snow .gaugecard__reading { color: var(--pine); }
+
+.roadlist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+
+.roadrow {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: space-between;
+  align-items: baseline;
+  row-gap: 2px;
+}
+
+.roadrow__name { font-size: 10.5px; letter-spacing: 0.08em; font-weight: 700; color: var(--ink); }
+
+.roadrow__summary {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+
+.roadrow__asof { margin: 10px 0 0; font-size: 8.5px; letter-spacing: 0.14em; color: var(--ink-soft); }
+
+.roadchip {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 1px 6px;
+  border-radius: var(--radius-xs);
+}
+
+.roadchip--open { background: var(--sage); color: var(--ink); }
+.roadchip--chains { background: var(--water); color: var(--stone); }
+.roadchip--closed { background: var(--rust); color: var(--stone); }
+
 /* Alerts */
 
 .alertcard {

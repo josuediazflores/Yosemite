@@ -30,6 +30,8 @@ keyless and CORS-friendly, so the browser calls them directly.
 | Weather alerts | NWS api.weather.gov | 10-min cache per point | public domain |
 | Earthquakes | USGS FDSN (80 km, 30 days) | hourly | public domain |
 | Wildfires | NASA EONET open events | hourly | public domain |
+| Snowpack | CDEC snow sensors (TUM, DAN, SLI) | every 6 h (daily sensor) | public data |
+| Roads | Caltrans highway conditions (120/140/41) + NPS bulletins for Tioga | 20 min | public data |
 | Boundary / trails / sites | NPS boundary service, OSM via Overpass, hand-curated | frozen in `public/data/` | ODbL (trails) |
 
 ## Conventions

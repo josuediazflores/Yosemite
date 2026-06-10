@@ -9,7 +9,9 @@ import type {
   ModuleStatus,
   NpsBulletin,
   NwsAlert,
+  RoadStatus,
   Site,
+  SnowReading,
 } from './model';
 
 // One small store; views subscribe to named events instead of a framework.
@@ -37,6 +39,10 @@ export interface AppState {
   nifcPerimeters: GeoJSON.FeatureCollection;
   ebirdSightings: FmFeature[];
   airnowBySite: Map<string, AirnowReading | 'error' | 'unavailable'>;
+  roads: RoadStatus[];
+  roadsError: boolean;
+  snow: SnowReading[];
+  snowError: boolean;
 }
 
 export const state: AppState = {
@@ -60,6 +66,10 @@ export const state: AppState = {
   nifcPerimeters: { type: 'FeatureCollection', features: [] },
   ebirdSightings: [],
   airnowBySite: new Map(),
+  roads: [],
+  roadsError: false,
+  snow: [],
+  snowError: false,
 };
 
 export type StateEvent =
@@ -71,7 +81,9 @@ export type StateEvent =
   | 'selection'
   | 'layers'
   | 'site-data'
-  | 'modules';
+  | 'modules'
+  | 'roads'
+  | 'snow';
 
 /** All sightings (iNaturalist + eBird) for map + nearest-N queries. */
 export function allSightings(): FmFeature[] {

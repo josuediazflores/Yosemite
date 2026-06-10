@@ -111,6 +111,23 @@ export interface AirnowReading {
   observedAt: string;
 }
 
+export interface RoadStatus {
+  corridor: string; // e.g. "CA-140 · ARCH ROCK"
+  status: 'open' | 'chains' | 'closed';
+  summary: string;
+  observedAt: string | null;
+}
+
+export interface SnowReading {
+  stationId: string;
+  name: string;
+  lngLat: [number, number];
+  elevFt: number;
+  sweIn: number | null;
+  depthIn: number | null;
+  observedAt: string | null;
+}
+
 // Freshness is derived from the observation timestamp at render time, so a
 // reading ages out of "live" without a refetch.
 const LIVE_MS = 60 * 60 * 1000; // 1 hour

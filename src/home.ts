@@ -8,6 +8,9 @@ import { fetchAirnow } from './api/airnow';
 import { fetchAlerts } from './api/nwsAlerts';
 import { fetchSightings } from './api/inaturalist';
 import { fetchEbirdSightings } from './api/ebird';
+import { fetchSnow } from './api/cdecSnow';
+import { deriveTiogaStatus, fetchRoads } from './api/roads';
+import { fetchNpsBulletins } from './api/nps';
 
 // Ouzel Console homepage (design direction B) — the layout is the design's;
 // the readings are real. Everything the mock showed as fixtures is wired to
@@ -107,7 +110,10 @@ async function loadConditions(): Promise<void> {
     .map((id) => gauges.find((g) => g.siteId === id))
     .filter((g): g is GaugeReading => Boolean(g));
 
-  row.innerHTML = `${featured.map(gaugeBlock).join('')}<div class="ozc-aqi" id="oz-aqi-tile"><span class="ozc-pending">Reading the air…</span></div>`;
+  row.innerHTML =
+    `${featured.map(gaugeBlock).join('')}` +
+    `<div class="ozc-aqi" id="oz-aqi-tile"><span class="ozc-pending">Reading the air…</span></div>` +
+    `<div class="ozc-aqi" id="oz-snow-tile"><span class="ozc-pending">Reading the snow pillows…</span></div>`;
 
   const latest = featured.map((g) => g.observedAt).filter(Boolean).sort().pop();
   if (latest) sweep.textContent = `SWEEP ${ptTime(new Date(latest))} · NEXT IN 15 MIN`;
@@ -122,6 +128,61 @@ async function loadConditions(): Promise<void> {
   }
   renderStations();
   loadAqiTile();
+  loadSnowTile();
+}
+
+async function loadSnowTile(): Promise<void> {
+  const tile = document.getElementById('oz-snow-tile');
+  if (!tile) return;
+  try {
+    const snow = await fetchSnow();
+    // Deepest pack tells the season's story best.
+    const top = snow.sort((a, b) => (b.depthIn ?? 0) - (a.depthIn ?? 0))[0];
+    if (!top) {
+      tile.innerHTML = `<span class="ozc-pending">Snow sensors read nothing — full melt-out.</span>`;
+      return;
+    }
+    const melted = (top.sweIn ?? 0) <= 0 && (top.depthIn ?? 0) <= 0;
+    const reading = melted
+      ? 'Melted out for the season'
+      : [
+          top.depthIn != null ? `${Math.round(top.depthIn)} in depth` : '',
+          top.sweIn != null ? `${top.sweIn.toFixed(2)} in SWE` : '',
+        ].filter(Boolean).join(' · ');
+    tile.innerHTML = `
+      <span class="ozc-snow__num">${top.depthIn != null ? Math.round(top.depthIn) : '—'}<span>IN</span></span>
+      <span class="ozc-aqi__col">
+        <span class="ozc-aqi__label">SNOWPACK · ${esc(top.name.toUpperCase())} · ${formatNumber(top.elevFt)} FT</span>
+        <span class="ozc-aqi__band">${esc(reading)}</span>
+        <span class="ozc-aqi__age">${chipHtml(freshnessOf(top.observedAt), true)} posted ${esc(relativeTime(top.observedAt))}</span>
+      </span>`;
+  } catch {
+    tile.innerHTML = `<span class="ozc-error">Snow sensors didn't answer. Reload to retry.</span>`;
+  }
+}
+
+async function loadRoads(): Promise<void> {
+  const strip = document.getElementById('oz-roads')!;
+  try {
+    const caltrans = await fetchRoads();
+    let bulletins: Awaited<ReturnType<typeof fetchNpsBulletins>> = [];
+    try {
+      bulletins = await fetchNpsBulletins();
+    } catch {
+      /* NPS module dormant → Tioga derives from an empty list, honestly */
+    }
+    const roads = [...caltrans, deriveTiogaStatus(bulletins, caltrans[0]?.observedAt ?? null)];
+    strip.innerHTML =
+      `<span class="ozc-roads__label">ACCESS</span>` +
+      roads
+        .map(
+          (r) =>
+            `<span class="ozc-roads__item"><span class="oz-mono">${esc(r.corridor)}</span> <span class="roadchip roadchip--${esc(r.status)}">${esc(r.status.toUpperCase())}</span></span>`,
+        )
+        .join('');
+  } catch {
+    strip.innerHTML = `<span class="ozc-roads__label">ACCESS</span><span class="ozc-error">Caltrans didn't answer — call 1-800-427-7623.</span>`;
+  }
 }
 
 async function loadAqiTile(): Promise<void> {
@@ -273,3 +334,4 @@ loadStationAqi();
 loadLog();
 loadBanner();
 loadPlateMeta();
+loadRoads();

@@ -18,10 +18,13 @@ import { fetchAirnow } from './api/airnow';
 import { fetchEbirdSightings } from './api/ebird';
 import { fetchNifcIncidents, fetchNifcPerimeters } from './api/nifc';
 import { fetchCampgrounds } from './api/npsCampgrounds';
+import { deriveTiogaStatus, fetchRoads } from './api/roads';
+import { fetchSnow } from './api/cdecSnow';
 
 const GAUGE_POLL_MS = 15 * 60 * 1000;
 const HAZARD_POLL_MS = 60 * 60 * 1000;
 const PARK_ALERT_POLL_MS = 20 * 60 * 1000;
+const SNOW_POLL_MS = 6 * 60 * 60 * 1000; // daily sensor; 6h is plenty
 
 async function boot(): Promise<void> {
   const res = await fetch('/data/sites.json');
@@ -50,6 +53,19 @@ async function boot(): Promise<void> {
   loadEbird();
   loadCampgrounds().then(applyDeepLink);
   applyDeepLink();
+  pollSnow();
+  setInterval(pollSnow, SNOW_POLL_MS);
+}
+
+async function pollSnow(): Promise<void> {
+  try {
+    state.snow = await fetchSnow();
+    state.snowError = false;
+  } catch (err) {
+    console.error('[yfm] snow', err);
+    state.snowError = true;
+  }
+  emit('snow');
 }
 
 // Homepage station rows deep-link as /?site=<id>; campground ids are dynamic,
@@ -162,6 +178,18 @@ async function pollParkAlerts(): Promise<void> {
     state.npsBulletins = await fetchNpsBulletins();
   });
   emit('park-alerts');
+  // Roads ride the same cadence — after bulletins, so the Tioga corridor
+  // derives from fresh NPS data.
+  try {
+    const caltrans = await fetchRoads();
+    const reportedAt = caltrans[0]?.observedAt ?? null;
+    state.roads = [...caltrans, deriveTiogaStatus(state.npsBulletins, reportedAt)];
+    state.roadsError = false;
+  } catch (err) {
+    console.error('[yfm] roads', err);
+    state.roadsError = true;
+  }
+  emit('roads');
 }
 
 async function loadEbird(): Promise<void> {
