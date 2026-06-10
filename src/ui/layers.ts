@@ -29,4 +29,12 @@ export function initLayerControl(container: HTMLElement): void {
     const layer = input.dataset.layer as LayerId | undefined;
     if (layer) toggleLayer(layer, input.checked);
   });
+
+  // On phones the control collapses behind a chip so the map keeps its room.
+  const fab = document.getElementById('layer-fab');
+  fab?.addEventListener('click', () => {
+    const open = document.body.classList.toggle('layers-open');
+    fab.setAttribute('aria-expanded', String(open));
+    fab.setAttribute('aria-label', open ? 'Hide layer toggles' : 'Show layer toggles');
+  });
 }
