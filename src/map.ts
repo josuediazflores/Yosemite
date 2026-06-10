@@ -138,6 +138,7 @@ function applyTerrain(on: boolean): void {
   if (on) {
     map.setTerrain({ source: 'terrain-dem', exaggeration: 1.15 });
     if (map.getLayer('satellite')) map.setLayoutProperty('satellite', 'visibility', 'visible');
+    if (map.getLayer('buildings-3d')) map.setLayoutProperty('buildings-3d', 'visibility', 'visible');
     map.setSky({
       'sky-color': '#b8c7d4',
       'horizon-color': '#eae6da',
@@ -149,6 +150,7 @@ function applyTerrain(on: boolean): void {
   } else {
     map.setTerrain(null);
     if (map.getLayer('satellite')) map.setLayoutProperty('satellite', 'visibility', 'none');
+    if (map.getLayer('buildings-3d')) map.setLayoutProperty('buildings-3d', 'visibility', 'none');
     map.setSky({} as never);
   }
   terrainChip?.setAttribute('aria-pressed', String(on));
@@ -531,6 +533,23 @@ function addDataLayers(): void {
     paint: { 'line-color': '#B4552C', 'line-width': 1.6, 'line-dasharray': [3, 2] },
   });
 
+  // Valley-core building volumes (baked from OSM + satellite roof tints) —
+  // they rise with the terrain in 3D mode only.
+  map.addSource('buildings', { type: 'geojson', data: '/data/buildings.geojson' });
+  map.addLayer({
+    id: 'buildings-3d',
+    type: 'fill-extrusion',
+    source: 'buildings',
+    minzoom: 12.8,
+    layout: { visibility: 'none' },
+    paint: {
+      'fill-extrusion-color': ['get', 'tint'],
+      'fill-extrusion-height': ['get', 'height'],
+      'fill-extrusion-base': 0,
+      'fill-extrusion-opacity': 0.95,
+    },
+  });
+
   // Fire points: NIFC/EONET incidents are full rust markers; FIRMS thermal
   // detections are smaller pixels so a satellite pass reads as a scatter.
   map.addSource('fires', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
@@ -630,7 +649,19 @@ function wireInteractions(): void {
       .addTo(map);
   });
 
-  for (const layer of ['sighting-clusters', 'sighting-points', 'quake-rings', 'fire-points']) {
+  // Named buildings answer when asked.
+  map.on('click', 'buildings-3d', (e) => {
+    const f = e.features?.[0];
+    if (!f?.properties?.name) return;
+    const p = f.properties;
+    const height = `${Math.round(Number(p.height))} m · ${p.heightSrc === 'osm-levels' ? 'from surveyed levels' : p.heightSrc === 'osm-height' ? 'surveyed height' : 'typical for its kind'}`;
+    new maplibregl.Popup({ offset: 10, className: 'yfm-popup', maxWidth: '240px' })
+      .setLngLat(e.lngLat)
+      .setHTML(`<article><h3>${esc(p.name)}</h3><p class="yfm-popup__meta">${esc(height)}</p><p class="yfm-popup__credit">Footprint © OpenStreetMap</p></article>`)
+      .addTo(map);
+  });
+
+  for (const layer of ['sighting-clusters', 'sighting-points', 'quake-rings', 'fire-points', 'buildings-3d']) {
     map.on('mouseenter', layer, () => (map.getCanvas().style.cursor = 'pointer'));
     map.on('mouseleave', layer, () => (map.getCanvas().style.cursor = ''));
   }
@@ -638,7 +669,7 @@ function wireInteractions(): void {
   // A bare map click (no feature, no marker) clears the selection.
   map.on('click', (e) => {
     const hits = map.queryRenderedFeatures(e.point, {
-      layers: ['sighting-clusters', 'sighting-points', 'quake-rings', 'fire-points'],
+      layers: ['sighting-clusters', 'sighting-points', 'quake-rings', 'fire-points', 'buildings-3d'],
     });
     if (hits.length === 0) selectSite(null);
   });
