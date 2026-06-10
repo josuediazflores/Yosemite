@@ -67,6 +67,33 @@ export function initMap(container: HTMLElement): maplibregl.Map {
   );
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
 
+  // Survey fixture (design system map furniture): north arrow + live scale,
+  // bottom-left, styled as one paper chip.
+  const northEl = document.createElement('div');
+  map.addControl(
+    {
+      onAdd: () => {
+        northEl.className = 'maplibregl-ctrl yfm-north';
+        northEl.setAttribute('aria-hidden', 'true');
+        northEl.innerHTML =
+          `<svg width="9" height="22" viewBox="0 0 9 22"><polygon points="4.5,0 9,11 4.5,8.5 0,11" fill="#20231C"></polygon>` +
+          `<line x1="4.5" y1="9" x2="4.5" y2="22" stroke="#20231C" stroke-width="1"></line></svg><span>N</span>`;
+        return northEl;
+      },
+      onRemove: () => northEl.remove(),
+    },
+    'bottom-left',
+  );
+  map.addControl(new maplibregl.ScaleControl({ maxWidth: 90, unit: 'imperial' }), 'bottom-left');
+
+  // Marker labels are survey annotations for the valley scale — they
+  // declutter automatically when zoomed out to the whole park.
+  const syncLabels = () => {
+    map.getContainer().classList.toggle('labels-on', map.getZoom() >= 10.8);
+  };
+  map.on('zoom', syncLabels);
+  syncLabels();
+
   map.on('load', () => {
     addStaticLayers();
     addDataLayers();
@@ -347,10 +374,13 @@ function wireInteractions(): void {
 export function renderSiteMarkers(sites: Site[]): void {
   for (const site of sites) {
     const el = document.createElement('button');
-    el.className = `site-marker site-marker--${site.kind}`;
+    el.className = `site-marker site-marker--${site.kind} site-marker--label-${site.labelPos ?? 'bottom'}`;
     el.type = 'button';
     el.setAttribute('aria-label', `${site.name} — open site details`);
-    el.innerHTML = `<span class="site-marker__shape" aria-hidden="true"></span>`;
+    const label = site.shortName
+      ? `<span class="site-marker__label" aria-hidden="true">${esc(site.shortName)}</span>`
+      : '';
+    el.innerHTML = `<span class="site-marker__shape" aria-hidden="true"></span>${label}`;
     el.addEventListener('click', (ev) => {
       ev.stopPropagation();
       selectSite(site.id);

@@ -44,6 +44,8 @@ export interface FmFeature {
   props: Record<string, unknown>;
 }
 
+export type LabelPos = 'top' | 'bottom' | 'left' | 'right';
+
 export interface Site {
   id: string;
   name: string;
@@ -51,6 +53,9 @@ export interface Site {
   lngLat: [number, number];
   elevFt: number | null;
   blurb: string;
+  /** Mono map label (design system: paper-halo survey annotation). */
+  shortName?: string;
+  labelPos?: LabelPos;
 }
 
 export interface CampgroundInfo {
@@ -71,6 +76,8 @@ export interface GaugeReading {
   dischargeCfs: number | null;
   gageHeightFt: number | null;
   observedAt: string | null;
+  /** Last-24h discharge series normalized to 0..1 for the gage-card sparkline. */
+  spark: number[];
 }
 
 export interface AqiReading {

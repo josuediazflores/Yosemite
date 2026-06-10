@@ -1,13 +1,15 @@
 import type { LayerId } from '../model';
 import { state, toggleLayer } from '../state';
 
-const LAYER_DEFS: { id: LayerId; label: string; swatch: string }[] = [
-  { id: 'sites', label: 'Sites', swatch: 'swatch--site' },
-  { id: 'camps', label: 'Camps', swatch: 'swatch--camp' },
-  { id: 'sightings', label: 'Sightings', swatch: 'swatch--sighting' },
-  { id: 'heat', label: 'Heatmap', swatch: 'swatch--heat' },
-  { id: 'fire', label: 'Fire', swatch: 'swatch--fire' },
-  { id: 'hazards', label: 'Quakes', swatch: 'swatch--quake' },
+// Each row carries its generated landmark badge (design-system icon set,
+// assets/icons/*-badge.png) in place of the old CSS pips.
+const LAYER_DEFS: { id: LayerId; label: string; icon: string }[] = [
+  { id: 'sites', label: 'Sites', icon: '/icons/viewpoint-badge.png' },
+  { id: 'camps', label: 'Camps', icon: '/icons/camp-badge.png' },
+  { id: 'sightings', label: 'Sightings', icon: '/icons/sighting-badge.png' },
+  { id: 'heat', label: 'Heatmap', icon: '/icons/heatmap-badge.png' },
+  { id: 'fire', label: 'Fire', icon: '/icons/fire-badge.png' },
+  { id: 'hazards', label: 'Quakes', icon: '/icons/quake-badge.png' },
 ];
 
 export function initLayerControl(container: HTMLElement): void {
@@ -17,7 +19,7 @@ export function initLayerControl(container: HTMLElement): void {
       (l) => `
       <label class="layer-toggle">
         <input type="checkbox" data-layer="${l.id}" ${state.layers[l.id] ? 'checked' : ''} />
-        <span class="layer-toggle__pip ${l.swatch}" aria-hidden="true"></span>
+        <img class="layer-toggle__badge" src="${l.icon}" alt="" aria-hidden="true" />
         <span>${l.label}</span>
       </label>`,
     ).join('')}`;

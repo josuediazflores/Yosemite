@@ -51,6 +51,8 @@ export async function fetchCampgrounds(): Promise<CampgroundRecord[]> {
           lngLat: [Number(c.longitude), Number(c.latitude)],
           elevFt: null,
           blurb: truncate(String(c.description ?? ''), 150),
+          shortName: String(c.name).replace(/\s*(campground|campsites|camp)\s*$/i, '').toUpperCase(),
+          labelPos: 'bottom',
         },
         info: {
           totalSites: Number(c.campsites?.totalSites) || null,

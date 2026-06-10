@@ -39,6 +39,26 @@ function chip(observedAt: string | null): string {
   return `<span class="chip chip--${f}">${FRESHNESS_LABEL[f]}</span>`;
 }
 
+// Section header with the survey-form dashed rule running to the edge.
+function secTitle(title: string): string {
+  return `<h3><span>${esc(title)}</span></h3>`;
+}
+
+// 24h discharge sparkline (design system Gauge card treatment).
+function sparklineSvg(points: number[], width = 68, height = 24): string {
+  if (points.length < 2) return '';
+  const step = width / (points.length - 1);
+  const xy = points.map(
+    (v, i) => `${(i * step).toFixed(1)},${(height - 3 - v * (height - 6)).toFixed(1)}`,
+  );
+  const lastY = (height - 3 - points[points.length - 1] * (height - 6)).toFixed(1);
+  return `<svg class="spark" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" aria-hidden="true">
+    <polygon points="0,${height} ${xy.join(' ')} ${width},${height}" fill="rgba(62,124,155,0.12)"></polygon>
+    <polyline points="${xy.join(' ')}" fill="none" stroke="#3E7C9B" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"></polyline>
+    <circle cx="${width}" cy="${lastY}" r="2.2" fill="#3E7C9B"></circle>
+  </svg>`;
+}
+
 function render(): void {
   const site = state.sites.find((s) => s.id === state.selectedSiteId);
   if (!site) {
@@ -52,7 +72,7 @@ function render(): void {
   panelEl.innerHTML = `
     <header class="panel__head">
       <div>
-        <span class="panel__kind">${esc(site.kind)}</span>
+        <span class="panel__kind"><span class="kind-pip kind-pip--${esc(site.kind)}" aria-hidden="true"></span>${esc(site.kind)}</span>
         <h2 class="panel__name">${esc(site.name)}</h2>
         <p class="panel__coords">${formatCoords(site.lngLat)}${site.elevFt != null ? ` · ${formatNumber(site.elevFt)} FT` : ''}</p>
       </div>
@@ -84,7 +104,7 @@ function aqiSection(site: Site): string {
     const band = aqiBand(airnow.aqi);
     const modelLine =
       aqi && aqi !== 'error' ? `<span class="aqi__time">Model check (Open-Meteo): ${Math.round(aqi.usAqi)}</span>` : '';
-    return `<section class="panel__section"><h3>Air quality · US AQI</h3>
+    return `<section class="panel__section">${secTitle('Air quality · US AQI')}
       <div class="aqi">
         <span class="aqi__badge" style="background:${band.color};color:${band.text}">${Math.round(airnow.aqi)}</span>
         <div class="aqi__detail">
@@ -113,7 +133,7 @@ function aqiSection(site: Site): string {
         </div>
       </div>`;
   }
-  return `<section class="panel__section"><h3>Air quality · US AQI</h3>${body}</section>`;
+  return `<section class="panel__section">${secTitle('Air quality · US AQI')}${body}</section>`;
 }
 
 function campgroundSection(site: Site): string {
@@ -134,7 +154,7 @@ function campgroundSection(site: Site): string {
     ? `<a class="campcard__link" href="${esc(info.reserveUrl)}" target="_blank" rel="noopener">Reservations & details ↗</a>`
     : '';
 
-  return `<section class="panel__section"><h3>Campground</h3>
+  return `<section class="panel__section">${secTitle('Campground')}
     <div class="campcard">
       <div class="campcard__row mono">${esc(counts.join(' · '))}${esc(fee)}</div>
       ${amenities}
@@ -161,7 +181,7 @@ function dormantLine(): string {
 function bulletinSection(): string {
   if (state.modules.nps !== 'ok') return '';
   if (!state.npsBulletins.length) {
-    return `<section class="panel__section"><h3>Park bulletins · NPS</h3>
+    return `<section class="panel__section">${secTitle('Park bulletins · NPS')}
       <p class="panel__empty">No active park bulletins.</p></section>`;
   }
   const urgent = (c: string) => c === 'Danger' || c === 'Park Closure';
@@ -177,16 +197,16 @@ function bulletinSection(): string {
     )
     .join('');
   const more = state.npsBulletins.length > 4 ? `<p class="panel__empty">+${state.npsBulletins.length - 4} more on nps.gov/yose.</p>` : '';
-  return `<section class="panel__section"><h3>Park bulletins · NPS</h3>${rows}${more}</section>`;
+  return `<section class="panel__section">${secTitle('Park bulletins · NPS')}${rows}${more}</section>`;
 }
 
 function gaugeSection(site: Site): string {
   if (state.gaugesError && !state.gauges.length) {
-    return `<section class="panel__section"><h3>Nearest river gage</h3>
+    return `<section class="panel__section">${secTitle('Nearest river gage')}
       <p class="panel__error">Gage network didn't answer. Readings resume on the next 15-minute sweep.</p></section>`;
   }
   if (!state.gauges.length) {
-    return `<section class="panel__section"><h3>Nearest river gage</h3>
+    return `<section class="panel__section">${secTitle('Nearest river gage')}
       <p class="panel__pending">Contacting gage network…</p></section>`;
   }
   const nearest = state.gauges.reduce<{ g: GaugeReading; km: number } | null>((best, g) => {
@@ -194,16 +214,28 @@ function gaugeSection(site: Site): string {
     return !best || km < best.km ? { g, km } : best;
   }, null)!;
 
-  return `<section class="panel__section"><h3>Nearest river gage</h3>
+  const reading = [
+    nearest.g.dischargeCfs !== null ? `${formatNumber(nearest.g.dischargeCfs)} cfs` : 'no flow value',
+    nearest.g.gageHeightFt !== null ? `${nearest.g.gageHeightFt.toFixed(2)} ft stage` : '',
+  ].filter(Boolean).join(' · ');
+
+  const spark = sparklineSvg(nearest.g.spark);
+  const sparkCol = spark
+    ? `<span class="gaugecard__sparkcol">${spark}<span class="gaugecard__sparklabel">LAST 24 H</span></span>`
+    : '';
+
+  return `<section class="panel__section">${secTitle('Nearest river gage')}
     <div class="gaugecard">
       <div class="gaugecard__row">
         <span class="gaugecard__name">${esc(nearest.g.shortName)}</span>
         <span class="gaugecard__dist">${formatMiles(nearest.km)} away</span>
       </div>
-      <div class="gaugecard__row gaugecard__row--data">
-        <span class="mono">${nearest.g.dischargeCfs !== null ? `${formatNumber(nearest.g.dischargeCfs)} cfs` : 'no flow value'}</span>
-        <span class="mono">${nearest.g.gageHeightFt !== null ? `${nearest.g.gageHeightFt.toFixed(2)} ft stage` : ''}</span>
-        <span>${chip(nearest.g.observedAt)} ${esc(relativeTime(nearest.g.observedAt))}</span>
+      <div class="gaugecard__body">
+        <span class="gaugecard__readcol">
+          <span class="gaugecard__reading mono">${esc(reading)}</span>
+          <span class="gaugecard__sub">${chip(nearest.g.observedAt)} ${esc(relativeTime(nearest.g.observedAt))}</span>
+        </span>
+        ${sparkCol}
       </div>
     </div></section>`;
 }
@@ -229,7 +261,7 @@ function alertSection(site: Site): string {
       )
       .join('');
   }
-  return `<section class="panel__section"><h3>Weather alerts</h3>${body}</section>`;
+  return `<section class="panel__section">${secTitle('Weather alerts')}${body}</section>`;
 }
 
 function hazardSection(site: Site): string {
@@ -275,18 +307,18 @@ function hazardSection(site: Site): string {
         .join('')
     : `<li class="panel__empty">No earthquakes above the noise floor within ${formatMiles(HAZARD_RADIUS_KM)} in 30 days.</li>`;
 
-  return `<section class="panel__section"><h3>Fire & seismic</h3>
+  return `<section class="panel__section">${secTitle('Fire & seismic')}
     <ul class="hazlist">${fireLine}${quakeLine}</ul></section>`;
 }
 
 function sightingsSection(site: Site): string {
   const pool = allSightings();
   if (state.sightingsError && !pool.length) {
-    return `<section class="panel__section"><h3>Recent sightings</h3>
+    return `<section class="panel__section">${secTitle('Recent sightings')}
       <p class="panel__error">iNaturalist didn't answer. Reload the page to refetch sightings.</p></section>`;
   }
   if (!pool.length) {
-    return `<section class="panel__section"><h3>Recent sightings</h3>
+    return `<section class="panel__section">${secTitle('Recent sightings')}
       <p class="panel__pending">Pulling the sightings log…</p></section>`;
   }
 
@@ -296,7 +328,7 @@ function sightingsSection(site: Site): string {
     .slice(0, NEARBY_SIGHTINGS);
 
   if (!nearest.length) {
-    return `<section class="panel__section"><h3>Recent sightings</h3>
+    return `<section class="panel__section">${secTitle('Recent sightings')}
       <p class="panel__empty">No research-grade sightings cached in range. The log refreshes every 30 minutes.</p></section>`;
   }
 
@@ -318,6 +350,6 @@ function sightingsSection(site: Site): string {
     })
     .join('');
 
-  return `<section class="panel__section"><h3>Recent sightings</h3>
+  return `<section class="panel__section">${secTitle('Recent sightings')}
     <ul class="sightlist">${rows}</ul></section>`;
 }
