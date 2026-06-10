@@ -1,22 +1,328 @@
 {
   "sites": [
-    { "id": "tunnel-view", "name": "Tunnel View", "kind": "viewpoint", "lngLat": [-119.6771, 37.7156], "elevFt": 4400, "shortName": "TUNNEL VIEW", "labelPos": "left", "blurb": "The classic valley panorama: El Capitan, Bridalveil Fall, and Half Dome in one frame." },
-    { "id": "valley-view", "name": "Valley View", "kind": "viewpoint", "lngLat": [-119.6660, 37.7177], "elevFt": 3930, "shortName": "VALLEY VIEW", "labelPos": "top", "blurb": "Riverside view of El Capitan and Bridalveil Fall from the Merced's bank." },
-    { "id": "glacier-point", "name": "Glacier Point", "kind": "viewpoint", "lngLat": [-119.5733, 37.7281], "elevFt": 7214, "shortName": "GLACIER PT", "labelPos": "bottom", "blurb": "3,200 feet above the valley floor, facing Half Dome and the high country." },
-    { "id": "sentinel-bridge", "name": "Sentinel Bridge", "kind": "viewpoint", "lngLat": [-119.5932, 37.7430], "elevFt": 3965, "shortName": "SENTINEL BR", "labelPos": "right", "blurb": "Half Dome reflected in the Merced — the classic evening shot." },
-    { "id": "taft-point", "name": "Taft Point", "kind": "viewpoint", "lngLat": [-119.6053, 37.7124], "elevFt": 7503, "shortName": "TAFT PT", "labelPos": "bottom", "blurb": "Exposed granite ledge and fissures over the valley's south rim." },
-    { "id": "sentinel-dome", "name": "Sentinel Dome", "kind": "viewpoint", "lngLat": [-119.5866, 37.7222], "elevFt": 8122, "shortName": "SENTINEL DOME", "labelPos": "right", "blurb": "360° summit panorama a short walk off Glacier Point Road." },
-    { "id": "olmsted-point", "name": "Olmsted Point", "kind": "viewpoint", "lngLat": [-119.4855, 37.8108], "elevFt": 8300, "shortName": "OLMSTED PT", "labelPos": "right", "blurb": "Glacial-polished granite looking down Tenaya Canyon toward Half Dome." },
-    { "id": "lower-yosemite-fall", "name": "Lower Yosemite Fall", "kind": "waterfall", "lngLat": [-119.5959, 37.7466], "elevFt": 4000, "shortName": "YOSEMITE FALLS", "labelPos": "top", "blurb": "Base of North America's tallest waterfall; thunders in spring, fades by late summer." },
-    { "id": "bridalveil-fall", "name": "Bridalveil Fall", "kind": "waterfall", "lngLat": [-119.6510, 37.7158], "elevFt": 4000, "shortName": "BRIDALVEIL", "labelPos": "bottom", "blurb": "620-foot fall that flows year-round and swings in the wind." },
-    { "id": "happy-isles", "name": "Happy Isles · Mist Trailhead", "kind": "trailhead", "lngLat": [-119.5582, 37.7325], "elevFt": 4035, "shortName": "HAPPY ISLES", "labelPos": "right", "blurb": "Gateway to Vernal and Nevada Falls. Gage 11264500 reads the Merced here." },
-    { "id": "mirror-lake", "name": "Mirror Lake", "kind": "trailhead", "lngLat": [-119.5489, 37.7411], "elevFt": 4100, "shortName": "MIRROR LAKE", "labelPos": "top", "blurb": "Seasonal lake under Half Dome's north face; best water in spring." },
-    { "id": "el-capitan-meadow", "name": "El Capitan Meadow", "kind": "meadow", "lngLat": [-119.6328, 37.7227], "elevFt": 3970, "shortName": "EL CAP MDW", "labelPos": "top", "blurb": "Straight-up view of the 3,000-foot wall; watch for climbers at dusk." },
-    { "id": "cooks-meadow", "name": "Cook's Meadow", "kind": "meadow", "lngLat": [-119.5931, 37.7459], "elevFt": 3975, "shortName": "COOK'S MDW", "labelPos": "left", "blurb": "Open meadow loop with Yosemite Falls, Half Dome, and frequent coyotes." },
-    { "id": "tuolumne-meadows", "name": "Tuolumne Meadows", "kind": "meadow", "lngLat": [-119.3622, 37.8767], "elevFt": 8600, "shortName": "TUOLUMNE MDWS", "labelPos": "bottom", "blurb": "The Sierra's largest subalpine meadow, along the Tuolumne River." },
-    { "id": "cathedral-lakes-th", "name": "Cathedral Lakes Trailhead", "kind": "trailhead", "lngLat": [-119.3826, 37.8733], "elevFt": 8580, "shortName": "CATHEDRAL LKS", "labelPos": "left", "blurb": "High-country start toward Cathedral Peak and its granite-rimmed lakes." },
-    { "id": "tenaya-lake", "name": "Tenaya Lake", "kind": "viewpoint", "lngLat": [-119.4582, 37.8300], "elevFt": 8150, "shortName": "TENAYA LAKE", "labelPos": "top", "blurb": "Granite-bound alpine lake right off Tioga Road." },
-    { "id": "mariposa-grove", "name": "Mariposa Grove", "kind": "trailhead", "lngLat": [-119.6044, 37.5141], "elevFt": 5600, "shortName": "MARIPOSA GROVE", "labelPos": "bottom", "blurb": "Five hundred giant sequoias, including the 3,000-year-old Grizzly Giant." },
-    { "id": "oshaughnessy-dam", "name": "O'Shaughnessy Dam · Hetch Hetchy", "kind": "trailhead", "lngLat": [-119.7880, 37.9464], "elevFt": 3900, "shortName": "HETCH HETCHY", "labelPos": "top", "blurb": "Trail across the dam toward Wapama Falls; the park's quiet northwest." }
+    {
+      "id": "tunnel-view",
+      "name": "Tunnel View",
+      "kind": "viewpoint",
+      "lngLat": [
+        -119.6771,
+        37.7156
+      ],
+      "elevFt": 4400,
+      "shortName": "TUNNEL VIEW",
+      "labelPos": "left",
+      "blurb": "The classic valley panorama: El Capitan, Bridalveil Fall, and Half Dome in one frame.",
+      "view": {
+        "bearing": 78,
+        "pitch": 67,
+        "zoom": 13.4
+      }
+    },
+    {
+      "id": "valley-view",
+      "name": "Valley View",
+      "kind": "viewpoint",
+      "lngLat": [
+        -119.666,
+        37.7177
+      ],
+      "elevFt": 3930,
+      "shortName": "VALLEY VIEW",
+      "labelPos": "top",
+      "blurb": "Riverside view of El Capitan and Bridalveil Fall from the Merced's bank.",
+      "view": {
+        "bearing": 95,
+        "pitch": 66,
+        "zoom": 13.8
+      }
+    },
+    {
+      "id": "glacier-point",
+      "name": "Glacier Point",
+      "kind": "viewpoint",
+      "lngLat": [
+        -119.5733,
+        37.7281
+      ],
+      "elevFt": 7214,
+      "shortName": "GLACIER PT",
+      "labelPos": "bottom",
+      "blurb": "3,200 feet above the valley floor, facing Half Dome and the high country.",
+      "view": {
+        "bearing": 32,
+        "pitch": 64,
+        "zoom": 13.6
+      }
+    },
+    {
+      "id": "sentinel-bridge",
+      "name": "Sentinel Bridge",
+      "kind": "viewpoint",
+      "lngLat": [
+        -119.5932,
+        37.743
+      ],
+      "elevFt": 3965,
+      "shortName": "SENTINEL BR",
+      "labelPos": "right",
+      "blurb": "Half Dome reflected in the Merced — the classic evening shot.",
+      "view": {
+        "bearing": 82,
+        "pitch": 66,
+        "zoom": 14.0
+      }
+    },
+    {
+      "id": "taft-point",
+      "name": "Taft Point",
+      "kind": "viewpoint",
+      "lngLat": [
+        -119.6053,
+        37.7124
+      ],
+      "elevFt": 7503,
+      "shortName": "TAFT PT",
+      "labelPos": "bottom",
+      "blurb": "Exposed granite ledge and fissures over the valley's south rim.",
+      "view": {
+        "bearing": 8,
+        "pitch": 63,
+        "zoom": 13.7
+      }
+    },
+    {
+      "id": "sentinel-dome",
+      "name": "Sentinel Dome",
+      "kind": "viewpoint",
+      "lngLat": [
+        -119.5866,
+        37.7222
+      ],
+      "elevFt": 8122,
+      "shortName": "SENTINEL DOME",
+      "labelPos": "right",
+      "blurb": "360° summit panorama a short walk off Glacier Point Road.",
+      "view": {
+        "bearing": 28,
+        "pitch": 62,
+        "zoom": 13.6
+      }
+    },
+    {
+      "id": "olmsted-point",
+      "name": "Olmsted Point",
+      "kind": "viewpoint",
+      "lngLat": [
+        -119.4855,
+        37.8108
+      ],
+      "elevFt": 8300,
+      "shortName": "OLMSTED PT",
+      "labelPos": "right",
+      "blurb": "Glacial-polished granite looking down Tenaya Canyon toward Half Dome.",
+      "view": {
+        "bearing": 215,
+        "pitch": 64,
+        "zoom": 13.5
+      }
+    },
+    {
+      "id": "lower-yosemite-fall",
+      "name": "Lower Yosemite Fall",
+      "kind": "waterfall",
+      "lngLat": [
+        -119.5959,
+        37.7466
+      ],
+      "elevFt": 4000,
+      "shortName": "YOSEMITE FALLS",
+      "labelPos": "top",
+      "blurb": "Base of North America's tallest waterfall; thunders in spring, fades by late summer.",
+      "view": {
+        "bearing": 355,
+        "pitch": 65,
+        "zoom": 14.2
+      }
+    },
+    {
+      "id": "bridalveil-fall",
+      "name": "Bridalveil Fall",
+      "kind": "waterfall",
+      "lngLat": [
+        -119.651,
+        37.7158
+      ],
+      "elevFt": 4000,
+      "shortName": "BRIDALVEIL",
+      "labelPos": "bottom",
+      "blurb": "620-foot fall that flows year-round and swings in the wind.",
+      "view": {
+        "bearing": 185,
+        "pitch": 64,
+        "zoom": 14.2
+      }
+    },
+    {
+      "id": "happy-isles",
+      "name": "Happy Isles · Mist Trailhead",
+      "kind": "trailhead",
+      "lngLat": [
+        -119.5582,
+        37.7325
+      ],
+      "elevFt": 4035,
+      "shortName": "HAPPY ISLES",
+      "labelPos": "right",
+      "blurb": "Gateway to Vernal and Nevada Falls. Gage 11264500 reads the Merced here.",
+      "view": {
+        "bearing": 132,
+        "pitch": 65,
+        "zoom": 14.0
+      }
+    },
+    {
+      "id": "mirror-lake",
+      "name": "Mirror Lake",
+      "kind": "trailhead",
+      "lngLat": [
+        -119.5489,
+        37.7411
+      ],
+      "elevFt": 4100,
+      "shortName": "MIRROR LAKE",
+      "labelPos": "top",
+      "blurb": "Seasonal lake under Half Dome's north face; best water in spring.",
+      "view": {
+        "bearing": 118,
+        "pitch": 65,
+        "zoom": 14.0
+      }
+    },
+    {
+      "id": "el-capitan-meadow",
+      "name": "El Capitan Meadow",
+      "kind": "meadow",
+      "lngLat": [
+        -119.6328,
+        37.7227
+      ],
+      "elevFt": 3970,
+      "shortName": "EL CAP MDW",
+      "labelPos": "top",
+      "blurb": "Straight-up view of the 3,000-foot wall; watch for climbers at dusk.",
+      "view": {
+        "bearing": 8,
+        "pitch": 68,
+        "zoom": 13.9
+      }
+    },
+    {
+      "id": "cooks-meadow",
+      "name": "Cook's Meadow",
+      "kind": "meadow",
+      "lngLat": [
+        -119.5931,
+        37.7459
+      ],
+      "elevFt": 3975,
+      "shortName": "COOK'S MDW",
+      "labelPos": "left",
+      "blurb": "Open meadow loop with Yosemite Falls, Half Dome, and frequent coyotes.",
+      "view": {
+        "bearing": 55,
+        "pitch": 66,
+        "zoom": 14.0
+      }
+    },
+    {
+      "id": "tuolumne-meadows",
+      "name": "Tuolumne Meadows",
+      "kind": "meadow",
+      "lngLat": [
+        -119.3622,
+        37.8767
+      ],
+      "elevFt": 8600,
+      "shortName": "TUOLUMNE MDWS",
+      "labelPos": "bottom",
+      "blurb": "The Sierra's largest subalpine meadow, along the Tuolumne River.",
+      "view": {
+        "bearing": 252,
+        "pitch": 63,
+        "zoom": 13.4
+      }
+    },
+    {
+      "id": "cathedral-lakes-th",
+      "name": "Cathedral Lakes Trailhead",
+      "kind": "trailhead",
+      "lngLat": [
+        -119.3826,
+        37.8733
+      ],
+      "elevFt": 8580,
+      "shortName": "CATHEDRAL LKS",
+      "labelPos": "left",
+      "blurb": "High-country start toward Cathedral Peak and its granite-rimmed lakes.",
+      "view": {
+        "bearing": 228,
+        "pitch": 64,
+        "zoom": 13.4
+      }
+    },
+    {
+      "id": "tenaya-lake",
+      "name": "Tenaya Lake",
+      "kind": "viewpoint",
+      "lngLat": [
+        -119.4582,
+        37.83
+      ],
+      "elevFt": 8150,
+      "shortName": "TENAYA LAKE",
+      "labelPos": "top",
+      "blurb": "Granite-bound alpine lake right off Tioga Road.",
+      "view": {
+        "bearing": 62,
+        "pitch": 64,
+        "zoom": 13.6
+      }
+    },
+    {
+      "id": "mariposa-grove",
+      "name": "Mariposa Grove",
+      "kind": "trailhead",
+      "lngLat": [
+        -119.6044,
+        37.5141
+      ],
+      "elevFt": 5600,
+      "shortName": "MARIPOSA GROVE",
+      "labelPos": "bottom",
+      "blurb": "Five hundred giant sequoias, including the 3,000-year-old Grizzly Giant.",
+      "view": {
+        "bearing": 30,
+        "pitch": 62,
+        "zoom": 14.0
+      }
+    },
+    {
+      "id": "oshaughnessy-dam",
+      "name": "O'Shaughnessy Dam · Hetch Hetchy",
+      "kind": "trailhead",
+      "lngLat": [
+        -119.788,
+        37.9464
+      ],
+      "elevFt": 3900,
+      "shortName": "HETCH HETCHY",
+      "labelPos": "top",
+      "blurb": "Trail across the dam toward Wapama Falls; the park's quiet northwest.",
+      "view": {
+        "bearing": 72,
+        "pitch": 64,
+        "zoom": 13.7
+      }
+    }
   ]
 }

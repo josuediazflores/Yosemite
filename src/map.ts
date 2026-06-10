@@ -12,8 +12,47 @@ const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').mat
 const TOPO_TILES =
   'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}';
 
+// 3D site view: the same keyless sources ode-to-yosemite bakes offline —
+// Terrarium-encoded DEM (Mapzen/AWS Open Data) and Esri World Imagery —
+// consumed live through MapLibre's native terrain instead of three.js.
+const TERRAIN_TILES = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
+const SAT_TILES =
+  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+
 let map: maplibregl.Map;
 const siteMarkers = new Map<string, { marker: maplibregl.Marker; el: HTMLButtonElement }>();
+let terrainOn = false;
+let terrainChip: HTMLButtonElement | null = null;
+
+// Auto-swap drape: satellite over real relief in 3D, the quad sheet in 2D.
+function applyTerrain(on: boolean): void {
+  if (on === terrainOn) return;
+  // setTerrain demands a loaded style; deep links select a site mid-boot,
+  // so defer until the map settles and re-apply.
+  if (!map.isStyleLoaded()) {
+    map.once('idle', () => applyTerrain(on));
+    return;
+  }
+  terrainOn = on;
+  if (on) {
+    map.setTerrain({ source: 'terrain-dem', exaggeration: 1.15 });
+    if (map.getLayer('satellite')) map.setLayoutProperty('satellite', 'visibility', 'visible');
+    map.setSky({
+      'sky-color': '#b8c7d4',
+      'horizon-color': '#eae6da',
+      'fog-color': '#ddd8c8',
+      'sky-horizon-blend': 0.6,
+      'horizon-fog-blend': 0.55,
+      'fog-ground-blend': 0.85,
+    });
+  } else {
+    map.setTerrain(null);
+    if (map.getLayer('satellite')) map.setLayoutProperty('satellite', 'visibility', 'none');
+    map.setSky({} as never);
+  }
+  terrainChip?.setAttribute('aria-pressed', String(on));
+  if (terrainChip) terrainChip.textContent = on ? '2D' : '3D';
+}
 
 function esc(s: unknown): string {
   return String(s ?? '').replace(/[&<>"']/g, (c) =>
@@ -40,6 +79,7 @@ export function initMap(container: HTMLElement): maplibregl.Map {
     zoom: 9.6,
     minZoom: 7.5,
     maxZoom: 15.8,
+    maxPitch: 70,
     attributionControl: false,
     style: {
       version: 8,
@@ -52,8 +92,32 @@ export function initMap(container: HTMLElement): maplibregl.Map {
           maxzoom: 16,
           attribution: 'Basemap: USGS The National Map (public domain)',
         },
+        satellite: {
+          type: 'raster',
+          tiles: [SAT_TILES],
+          tileSize: 256,
+          maxzoom: 17,
+          attribution: 'Imagery: Esri World Imagery',
+        },
+        'terrain-dem': {
+          type: 'raster-dem',
+          tiles: [TERRAIN_TILES],
+          tileSize: 256,
+          maxzoom: 14,
+          encoding: 'terrarium',
+          attribution: 'Terrain: Mapzen/AWS Open Data (NASA/USGS DEMs)',
+        },
       },
-      layers: [{ id: 'topo', type: 'raster', source: 'topo' }],
+      layers: [
+        { id: 'topo', type: 'raster', source: 'topo' },
+        {
+          id: 'satellite',
+          type: 'raster',
+          source: 'satellite',
+          layout: { visibility: 'none' },
+          paint: { 'raster-fade-duration': 300 },
+        },
+      ],
     },
   });
 
@@ -66,6 +130,35 @@ export function initMap(container: HTMLElement): maplibregl.Map {
     'bottom-right',
   );
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
+
+  // 2D/3D toggle chip — manual terrain mode without needing a selection.
+  const tdEl = document.createElement('button');
+  map.addControl(
+    {
+      onAdd: () => {
+        tdEl.className = 'maplibregl-ctrl yfm-3d';
+        tdEl.type = 'button';
+        tdEl.textContent = '3D';
+        tdEl.setAttribute('aria-pressed', 'false');
+        tdEl.setAttribute('aria-label', 'Toggle 3D terrain');
+        tdEl.addEventListener('click', () => {
+          if (terrainOn) {
+            applyTerrain(false);
+            const opts = { pitch: 0, bearing: 0, duration: 900 };
+            REDUCED_MOTION ? map.jumpTo(opts) : map.easeTo(opts);
+          } else {
+            applyTerrain(true);
+            const opts = { pitch: 58, duration: 900 };
+            REDUCED_MOTION ? map.jumpTo(opts) : map.easeTo(opts);
+          }
+        });
+        return tdEl;
+      },
+      onRemove: () => tdEl.remove(),
+    },
+    'bottom-right',
+  );
+  terrainChip = tdEl;
 
   // Survey fixture (design system map furniture): north arrow + live scale,
   // bottom-left, styled as one paper chip.
@@ -109,6 +202,9 @@ export function initMap(container: HTMLElement): maplibregl.Map {
   on('quakes', syncQuakes);
   on('fires', syncFires);
   on('selection', syncSelection);
+
+  // Dev-console handle for verification and poking at paint/camera state.
+  (window as unknown as Record<string, unknown>).yfmMap = map;
 
   return map;
 }
@@ -397,15 +493,31 @@ function syncSelection(): void {
     el.classList.toggle('site-marker--selected', id === state.selectedSiteId);
   }
   const site = state.sites.find((s) => s.id === state.selectedSiteId);
+  const desktop = window.matchMedia('(min-width: 720px)').matches;
+
   if (site) {
-    const desktop = window.matchMedia('(min-width: 720px)').matches;
+    // Site view: tilt into real terrain and frame the landmark, panel right.
+    applyTerrain(true);
     const opts = {
       center: site.lngLat,
-      padding: desktop ? { right: 380, top: 40, bottom: 40, left: 40 } : { bottom: 300, top: 40, left: 20, right: 20 },
-      zoom: Math.max(map.getZoom(), 11.5),
+      zoom: site.view?.zoom ?? 13.8,
+      pitch: site.view?.pitch ?? 66,
+      bearing: site.view?.bearing ?? 24,
+      padding: desktop ? { right: 380, top: 40, bottom: 40, left: 40 } : { bottom: 300, top: 60, left: 20, right: 20 },
     };
     if (REDUCED_MOTION) map.jumpTo(opts);
-    else map.easeTo({ ...opts, duration: 700 });
+    else map.easeTo({ ...opts, duration: 1900 });
+  } else {
+    // Browse view: back down to the flat quad sheet.
+    applyTerrain(false);
+    const opts = {
+      pitch: 0,
+      bearing: 0,
+      zoom: Math.min(map.getZoom(), 11.6),
+      padding: { top: 0, bottom: 0, left: 0, right: 0 },
+    };
+    if (REDUCED_MOTION) map.jumpTo(opts);
+    else map.easeTo({ ...opts, duration: 1100 });
   }
 }
 

@@ -56,6 +56,8 @@ export interface Site {
   /** Mono map label (design system: paper-halo survey annotation). */
   shortName?: string;
   labelPos?: LabelPos;
+  /** 3D fly-in framing; sites without one get the default camera. */
+  view?: { bearing?: number; pitch?: number; zoom?: number };
 }
 
 export interface CampgroundInfo {
