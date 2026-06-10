@@ -23,6 +23,46 @@ let map: maplibregl.Map;
 const siteMarkers = new Map<string, { marker: maplibregl.Marker; el: HTMLButtonElement }>();
 let terrainOn = false;
 let terrainChip: HTMLButtonElement | null = null;
+let camWrap: HTMLDivElement | null = null;
+let orbitOn = false;
+let orbitRAF = 0;
+
+function stopOrbit(): void {
+  if (!orbitOn && !orbitRAF) return;
+  orbitOn = false;
+  if (orbitRAF) cancelAnimationFrame(orbitRAF);
+  orbitRAF = 0;
+  camWrap?.querySelector('[data-cam="orbit"]')?.setAttribute('aria-pressed', 'false');
+}
+
+// Slow cinematic spin around the framed site (~4°/s). Any direct input,
+// a new selection, or leaving 3D stops it; reduced-motion never starts it.
+function startOrbit(): void {
+  if (REDUCED_MOTION || !terrainOn) return;
+  orbitOn = true;
+  camWrap?.querySelector('[data-cam="orbit"]')?.setAttribute('aria-pressed', 'true');
+  let last = performance.now();
+  let guardAcc = 0;
+  const step = (now: number) => {
+    if (!orbitOn) return;
+    const dt = Math.min(now - last, 100);
+    last = now;
+    map.setBearing(map.getBearing() + dt * 0.004);
+    guardAcc += dt;
+    if (guardAcc > 1500) {
+      guardAcc = 0;
+      // Orbiting at a fixed pitch can swing the eye toward a wall — dip
+      // flatter when clearance shrinks instead of clipping in.
+      const t = (map as unknown as { transform: { getCameraLngLat(): maplibregl.LngLat; getCameraAltitude(): number } }).transform;
+      const ground = map.queryTerrainElevation(t.getCameraLngLat());
+      if (ground != null && t.getCameraAltitude() - ground < 60) {
+        map.setPitch(Math.max(42, map.getPitch() - 8));
+      }
+    }
+    orbitRAF = requestAnimationFrame(step);
+  };
+  orbitRAF = requestAnimationFrame(step);
+}
 
 // Auto-swap drape: satellite over real relief in 3D, the quad sheet in 2D.
 function applyTerrain(on: boolean): void {
@@ -52,6 +92,8 @@ function applyTerrain(on: boolean): void {
   }
   terrainChip?.setAttribute('aria-pressed', String(on));
   if (terrainChip) terrainChip.textContent = on ? '2D' : '3D';
+  document.body.classList.toggle('terrain-on', on);
+  if (!on) stopOrbit();
 }
 
 // The fly-in aims a camera, not a drone with collision sensors: at cliff-base
@@ -156,7 +198,51 @@ export function initMap(container: HTMLElement): maplibregl.Map {
     }),
     'bottom-right',
   );
-  map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
+  map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), 'bottom-right');
+
+  // Camera cluster — rotate / tilt / orbit, shown only in 3D (body.terrain-on).
+  const camEl = document.createElement('div');
+  map.addControl(
+    {
+      onAdd: () => {
+        camEl.className = 'maplibregl-ctrl yfm-cam';
+        camEl.innerHTML = `
+          <button type="button" data-cam="rot-l" aria-label="Rotate left">⟲</button>
+          <button type="button" data-cam="rot-r" aria-label="Rotate right">⟳</button>
+          <button type="button" data-cam="flatter" aria-label="Tilt flatter">↥</button>
+          <button type="button" data-cam="steeper" aria-label="Tilt steeper">↧</button>
+          <button type="button" data-cam="orbit" aria-label="Orbit the site" aria-pressed="false">ORBIT</button>`;
+        camEl.addEventListener('click', (e) => {
+          const btn = (e.target as HTMLElement).closest('button');
+          if (!btn) return;
+          const action = btn.dataset.cam;
+          if (action === 'orbit') {
+            orbitOn ? stopOrbit() : startOrbit();
+            return;
+          }
+          stopOrbit();
+          if (action === 'rot-l' || action === 'rot-r') {
+            const opts = { bearing: map.getBearing() + (action === 'rot-l' ? -30 : 30), duration: 600 };
+            REDUCED_MOTION ? map.jumpTo(opts) : map.easeTo(opts);
+          } else {
+            const pitch = Math.min(70, Math.max(20, map.getPitch() + (action === 'steeper' ? 10 : -10)));
+            map.once('moveend', () => ensureCameraClear());
+            const opts = { pitch, duration: 500 };
+            REDUCED_MOTION ? map.jumpTo(opts) : map.easeTo(opts);
+          }
+        });
+        return camEl;
+      },
+      onRemove: () => camEl.remove(),
+    },
+    'bottom-right',
+  );
+  camWrap = camEl;
+
+  // Hands on the map dismiss the autopilot.
+  for (const ev of ['mousedown', 'touchstart', 'wheel'] as const) {
+    map.on(ev, () => stopOrbit());
+  }
 
   // 2D/3D toggle chip — manual terrain mode without needing a selection.
   const tdEl = document.createElement('button');
@@ -526,6 +612,7 @@ function syncSelection(): void {
     // Site view: tilt into real terrain and frame the landmark, panel right.
     // Sites without a tuned framing (campgrounds) get a conservative camera —
     // many sit at the base of big walls.
+    stopOrbit();
     applyTerrain(true);
     const opts = {
       center: site.lngLat,

@@ -743,6 +743,36 @@ body:has(.banner:not([hidden])) .stage {
   background: rgba(234, 230, 218, 0.85) !important;
 }
 
+/* 3D camera cluster — rotate / tilt / orbit, only while terrain is on */
+.yfm-cam { display: none; flex-direction: column; gap: 4px; }
+
+body.terrain-on .yfm-cam { display: flex; }
+
+.yfm-cam button {
+  width: 38px;
+  height: 30px;
+  padding: 0;
+  background: rgba(234, 230, 218, 0.95);
+  border: 1px solid var(--pine);
+  border-radius: var(--radius-xs);
+  box-shadow: var(--shadow-control);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--pine);
+  cursor: pointer;
+}
+
+.yfm-cam button:hover { background: var(--stone); }
+
+.yfm-cam [data-cam='orbit'] { font-size: 8.5px; letter-spacing: 0.1em; }
+
+.yfm-cam [aria-pressed='true'] { background: var(--pine); color: var(--stone); }
+
+@media (prefers-reduced-motion: reduce) {
+  .yfm-cam [data-cam='orbit'] { display: none; }
+}
+
 /* 2D/3D terrain toggle chip */
 .yfm-3d {
   width: 38px;
