@@ -245,6 +245,7 @@ body:has(.banner:not([hidden])) .stage {
 
 .swatch--site { background: var(--pine); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
 .swatch--sighting { background: var(--sage); border-radius: 50%; }
+.swatch--heat { background: linear-gradient(135deg, var(--sage), var(--pine), var(--rust)); border-radius: 2px; }
 .swatch--fire { background: var(--rust); border-radius: 50%; }
 .swatch--quake { border: 2px solid var(--rust); border-radius: 50%; background: transparent; }
 
@@ -459,6 +460,15 @@ body:has(.banner:not([hidden])) .stage {
 .alertcard__event { font-weight: 600; font-size: 13px; color: var(--rust); }
 .alertcard__headline { font-size: 12px; }
 .alertcard__ends { font-family: var(--font-mono); font-size: 10px; color: var(--ink-soft); }
+
+.alertcard--info {
+  border-color: rgba(46, 70, 54, 0.4);
+  border-left-color: var(--pine);
+  background: rgba(46, 70, 54, 0.06);
+}
+.alertcard--info .alertcard__event { color: var(--pine); }
+
+.panel__dormant { color: var(--ink-soft); font-style: italic; }
 
 /* Hazards */
 

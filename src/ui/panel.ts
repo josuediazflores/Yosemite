@@ -1,7 +1,7 @@
-import type { FmFeature, GaugeReading, Site } from '../model';
+import type { FmFeature, GaugeReading, ModuleId, Site } from '../model';
 import { FRESHNESS_LABEL, freshnessOf } from '../model';
 import { absoluteTime, aqiBand, formatCoords, formatMiles, formatNumber, haversineKm, relativeTime } from '../format';
-import { on, selectSite, state } from '../state';
+import { allFires, allSightings, on, selectSite, state } from '../state';
 
 // Site detail panel: everything around the chosen spot, each block honest
 // about its own freshness and its own failures.
@@ -22,6 +22,9 @@ export function initPanel(el: HTMLElement): void {
   on('site-data', render);
   on('sightings', render);
   on('gauges', render);
+  on('fires', render);
+  on('park-alerts', render);
+  on('modules', render);
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && state.selectedSiteId) selectSite(null);
@@ -59,18 +62,39 @@ function render(): void {
     ${aqiSection(site)}
     ${gaugeSection(site)}
     ${alertSection(site)}
+    ${bulletinSection()}
     ${hazardSection(site)}
     ${sightingsSection(site)}
     <footer class="panel__credits">
-      AQI modeled by Open-Meteo (CAMS). Sightings © their iNaturalist observers, licenses as marked.
-      River data USGS NWIS, public domain. Alerts NWS. Fire events NASA EONET.
+      AQI: AirNow (observed) and Open-Meteo CAMS (modeled). Sightings © their iNaturalist/eBird
+      observers, licenses as marked. River data USGS NWIS, public domain. Alerts NWS + NPS.
+      Fire: NIFC/WFIGS, NASA FIRMS, NASA EONET.${dormantLine()}
     </footer>`;
 
   if (wasHidden) panelEl.focus();
 }
 
 function aqiSection(site: Site): string {
+  const airnow = state.airnowBySite.get(site.id);
   const aqi = state.aqiBySite.get(site.id);
+
+  // AirNow (observed) outranks the Open-Meteo model when a station reported.
+  if (airnow && airnow !== 'error' && airnow !== 'unavailable') {
+    const band = aqiBand(airnow.aqi);
+    const modelLine =
+      aqi && aqi !== 'error' ? `<span class="aqi__time">Model check (Open-Meteo): ${Math.round(aqi.usAqi)}</span>` : '';
+    return `<section class="panel__section"><h3>Air quality · US AQI</h3>
+      <div class="aqi">
+        <span class="aqi__badge" style="background:${band.color};color:${band.text}">${Math.round(airnow.aqi)}</span>
+        <div class="aqi__detail">
+          <span class="aqi__label">${esc(band.label)}</span>
+          <span class="aqi__particles">observed · primary ${esc(airnow.primaryPollutant)} · AirNow</span>
+          <span class="aqi__time">${chip(airnow.observedAt)} reported ${esc(relativeTime(airnow.observedAt))}</span>
+          ${modelLine}
+        </div>
+      </div></section>`;
+  }
+
   let body: string;
   if (aqi === undefined) {
     body = `<p class="panel__pending">Reading the air model…</p>`;
@@ -89,6 +113,43 @@ function aqiSection(site: Site): string {
       </div>`;
   }
   return `<section class="panel__section"><h3>Air quality · US AQI</h3>${body}</section>`;
+}
+
+const MODULE_LABEL: Record<ModuleId, string> = {
+  nps: 'NPS',
+  firms: 'FIRMS',
+  airnow: 'AirNow',
+  ebird: 'eBird',
+};
+
+function dormantLine(): string {
+  const dormant = (Object.keys(MODULE_LABEL) as ModuleId[])
+    .filter((m) => state.modules[m] === 'missing-key')
+    .map((m) => MODULE_LABEL[m]);
+  if (!dormant.length) return '';
+  return `<br /><span class="panel__dormant">Dormant modules awaiting keys in .env: ${dormant.join(', ')} — see .env.example.</span>`;
+}
+
+function bulletinSection(): string {
+  if (state.modules.nps !== 'ok') return '';
+  if (!state.npsBulletins.length) {
+    return `<section class="panel__section"><h3>Park bulletins · NPS</h3>
+      <p class="panel__empty">No active park bulletins.</p></section>`;
+  }
+  const urgent = (c: string) => c === 'Danger' || c === 'Park Closure';
+  const rows = [...state.npsBulletins]
+    .sort((a, b) => Number(urgent(b.category)) - Number(urgent(a.category)))
+    .slice(0, 4)
+    .map(
+      (b) => `
+      <div class="alertcard ${urgent(b.category) ? '' : 'alertcard--info'}">
+        <span class="alertcard__event">${esc(b.category)}</span>
+        <span class="alertcard__headline">${esc(b.title)}</span>
+      </div>`,
+    )
+    .join('');
+  const more = state.npsBulletins.length > 4 ? `<p class="panel__empty">+${state.npsBulletins.length - 4} more on nps.gov/yose.</p>` : '';
+  return `<section class="panel__section"><h3>Park bulletins · NPS</h3>${rows}${more}</section>`;
 }
 
 function gaugeSection(site: Site): string {
@@ -151,17 +212,30 @@ function hazardSection(site: Site): string {
       .sort((a, b) => a.km - b.km);
 
   const quakes = within(state.quakes);
-  const fires = within(state.fires);
+  const fires = within(allFires());
+
+  const fireLabel = (f: FmFeature): string => {
+    const p = f.props as Record<string, unknown>;
+    if (p.kind === 'detection') {
+      const frp = p.frp != null ? ` · FRP ${Number(p.frp).toFixed(1)} MW` : '';
+      return `VIIRS thermal detection${frp}`;
+    }
+    if (p.kind === 'incident') {
+      const acres = p.sizeAcres != null ? ` · ${Math.round(Number(p.sizeAcres))} ac` : '';
+      return `${p.title} (${p.typeLabel})${acres}`;
+    }
+    return String(p.title);
+  };
 
   const fireLine = fires.length
     ? fires
-        .slice(0, 2)
+        .slice(0, 3)
         .map(
           ({ f, km }) =>
-            `<li><span class="haz haz--fire" aria-hidden="true"></span>${esc(f.props.title)} — ${formatMiles(km)} ${chip(f.observedAt)}</li>`,
+            `<li><span class="haz haz--fire" aria-hidden="true"></span>${esc(fireLabel(f))} — ${formatMiles(km)} ${chip(f.observedAt)}</li>`,
         )
         .join('')
-    : `<li class="panel__empty">No open wildfire events within ${formatMiles(HAZARD_RADIUS_KM)}.</li>`;
+    : `<li class="panel__empty">No fire activity within ${formatMiles(HAZARD_RADIUS_KM)}.</li>`;
 
   const quakeLine = quakes.length
     ? quakes
@@ -178,16 +252,17 @@ function hazardSection(site: Site): string {
 }
 
 function sightingsSection(site: Site): string {
-  if (state.sightingsError && !state.sightings.length) {
+  const pool = allSightings();
+  if (state.sightingsError && !pool.length) {
     return `<section class="panel__section"><h3>Recent sightings</h3>
       <p class="panel__error">iNaturalist didn't answer. Reload the page to refetch sightings.</p></section>`;
   }
-  if (!state.sightings.length) {
+  if (!pool.length) {
     return `<section class="panel__section"><h3>Recent sightings</h3>
       <p class="panel__pending">Pulling the sightings log…</p></section>`;
   }
 
-  const nearest = state.sightings
+  const nearest = pool
     .map((f) => ({ f, km: haversineKm(site.lngLat, f.lngLat) }))
     .sort((a, b) => a.km - b.km)
     .slice(0, NEARBY_SIGHTINGS);

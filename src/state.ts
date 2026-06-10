@@ -1,4 +1,15 @@
-import type { AqiReading, FmFeature, GaugeReading, LayerId, NwsAlert, Site } from './model';
+import type {
+  AirnowReading,
+  AqiReading,
+  FmFeature,
+  GaugeReading,
+  LayerId,
+  ModuleId,
+  ModuleStatus,
+  NpsBulletin,
+  NwsAlert,
+  Site,
+} from './model';
 
 // One small store; views subscribe to named events instead of a framework.
 type Listener = () => void;
@@ -16,12 +27,20 @@ export interface AppState {
   parkAlerts: NwsAlert[];
   aqiBySite: Map<string, AqiReading | 'error'>;
   alertsBySite: Map<string, NwsAlert[] | 'error'>;
+  // Phase 2
+  modules: Record<ModuleId, ModuleStatus>;
+  npsBulletins: NpsBulletin[];
+  firmsDetections: FmFeature[];
+  nifcIncidents: FmFeature[];
+  nifcPerimeters: GeoJSON.FeatureCollection;
+  ebirdSightings: FmFeature[];
+  airnowBySite: Map<string, AirnowReading | 'error' | 'unavailable'>;
 }
 
 export const state: AppState = {
   sites: [],
   selectedSiteId: null,
-  layers: { sites: true, sightings: true, fire: true, hazards: true },
+  layers: { sites: true, sightings: true, fire: true, hazards: true, heat: false },
   gauges: [],
   gaugesError: false,
   sightings: [],
@@ -31,6 +50,13 @@ export const state: AppState = {
   parkAlerts: [],
   aqiBySite: new Map(),
   alertsBySite: new Map(),
+  modules: { nps: 'pending', firms: 'pending', airnow: 'pending', ebird: 'pending' },
+  npsBulletins: [],
+  firmsDetections: [],
+  nifcIncidents: [],
+  nifcPerimeters: { type: 'FeatureCollection', features: [] },
+  ebirdSightings: [],
+  airnowBySite: new Map(),
 };
 
 export type StateEvent =
@@ -41,7 +67,18 @@ export type StateEvent =
   | 'park-alerts'
   | 'selection'
   | 'layers'
-  | 'site-data';
+  | 'site-data'
+  | 'modules';
+
+/** All sightings (iNaturalist + eBird) for map + nearest-N queries. */
+export function allSightings(): FmFeature[] {
+  return [...state.sightings, ...state.ebirdSightings];
+}
+
+/** All fire features (EONET events + FIRMS detections + NIFC incidents). */
+export function allFires(): FmFeature[] {
+  return [...state.fires, ...state.firmsDetections, ...state.nifcIncidents];
+}
 
 const listeners = new Map<StateEvent, Set<Listener>>();
 

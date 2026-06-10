@@ -25,6 +25,7 @@ export async function fetchFires(): Promise<FmFeature[]> {
       license: 'public domain',
       attribution: 'NASA EONET',
       props: {
+        kind: 'event',
         title: f.properties.title,
         url: f.properties.link,
       },

@@ -67,15 +67,22 @@ function render(): void {
 }
 
 function renderBanner(): void {
-  const alerts = state.parkAlerts;
-  if (!alerts.length) {
+  // NWS weather alerts lead; NPS Danger/Closure bulletins count alongside.
+  const closures = state.npsBulletins.filter(
+    (b) => b.category === 'Danger' || b.category === 'Park Closure',
+  );
+  const items: { tag: string; text: string }[] = [
+    ...state.parkAlerts.map((a) => ({ tag: 'ALERT', text: `${a.event}: ${a.headline}` })),
+    ...closures.map((b) => ({ tag: 'PARK', text: `${b.category}: ${b.title}` })),
+  ];
+  if (!items.length) {
     bannerEl.hidden = true;
     return;
   }
   bannerEl.hidden = false;
-  const first = alerts[0];
-  const more = alerts.length > 1 ? ` · +${alerts.length - 1} more in the detail panels` : '';
-  bannerEl.innerHTML = `<span class="banner__tag">ALERT</span> ${escapeHtml(first.event)}: ${escapeHtml(first.headline)}${more}`;
+  const first = items[0];
+  const more = items.length > 1 ? ` · +${items.length - 1} more in the detail panels` : '';
+  bannerEl.innerHTML = `<span class="banner__tag">${escapeHtml(first.tag)}</span> ${escapeHtml(first.text)}${more}`;
 }
 
 function escapeHtml(s: string): string {

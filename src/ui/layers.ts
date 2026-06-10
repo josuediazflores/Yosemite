@@ -4,6 +4,7 @@ import { state, toggleLayer } from '../state';
 const LAYER_DEFS: { id: LayerId; label: string; swatch: string }[] = [
   { id: 'sites', label: 'Sites', swatch: 'swatch--site' },
   { id: 'sightings', label: 'Sightings', swatch: 'swatch--sighting' },
+  { id: 'heat', label: 'Heatmap', swatch: 'swatch--heat' },
   { id: 'fire', label: 'Fire', swatch: 'swatch--fire' },
   { id: 'hazards', label: 'Quakes', swatch: 'swatch--quake' },
 ];

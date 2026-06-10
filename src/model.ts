@@ -11,9 +11,26 @@ export type SourceId =
   | 'open-meteo'
   | 'nws'
   | 'usgs-quake'
-  | 'eonet';
+  | 'eonet'
+  | 'firms'
+  | 'nifc'
+  | 'airnow'
+  | 'ebird'
+  | 'nps';
 
-export type LayerId = 'sites' | 'sightings' | 'fire' | 'hazards';
+export type LayerId = 'sites' | 'sightings' | 'fire' | 'hazards' | 'heat';
+
+/** Keyed modules proxied through the dev server; 'missing-key' = no .env entry yet. */
+export type ModuleStatus = 'pending' | 'ok' | 'missing-key' | 'error';
+export type ModuleId = 'nps' | 'firms' | 'airnow' | 'ebird';
+
+export class MissingKeyError extends Error {
+  envVar: string;
+  constructor(envVar: string) {
+    super(`missing key: ${envVar}`);
+    this.envVar = envVar;
+  }
+}
 
 export interface FmFeature {
   id: string;
@@ -60,6 +77,21 @@ export interface NwsAlert {
   severity: string;
   headline: string;
   ends: string | null;
+}
+
+export interface NpsBulletin {
+  id: string;
+  title: string;
+  category: string; // Danger | Park Closure | Caution | Information
+  description: string;
+  url: string | null;
+}
+
+export interface AirnowReading {
+  aqi: number;
+  primaryPollutant: string;
+  categoryName: string;
+  observedAt: string;
 }
 
 // Freshness is derived from the observation timestamp at render time, so a

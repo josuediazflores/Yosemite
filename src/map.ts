@@ -3,7 +3,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import type { FmFeature, Site } from './model';
 import { freshnessOf, PARK_CENTER } from './model';
 import { relativeTime } from './format';
-import { selectSite, state, on } from './state';
+import { allFires, allSightings, selectSite, state, on } from './state';
 
 const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -118,6 +118,34 @@ async function addStaticLayers(): Promise<void> {
 }
 
 function addDataLayers(): void {
+  // Sightings heatmap: same data, unclustered, drawn under everything else.
+  // Archive records weigh less so the heat reflects recency, not just volume.
+  map.addSource('sightings-heat', {
+    type: 'geojson',
+    data: { type: 'FeatureCollection', features: [] },
+  });
+  map.addLayer({
+    id: 'sighting-heat',
+    type: 'heatmap',
+    source: 'sightings-heat',
+    maxzoom: 15,
+    layout: { visibility: 'none' },
+    paint: {
+      'heatmap-weight': ['match', ['get', 'freshness'], 'historical', 0.4, 1],
+      'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 8, 0.7, 14, 2.2],
+      'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 8, 14, 14, 34],
+      'heatmap-opacity': 0.75,
+      'heatmap-color': [
+        'interpolate', ['linear'], ['heatmap-density'],
+        0, 'rgba(147, 168, 98, 0)',
+        0.25, 'rgba(147, 168, 98, 0.45)',
+        0.5, 'rgba(147, 168, 98, 0.8)',
+        0.75, 'rgba(46, 70, 54, 0.85)',
+        1, 'rgba(180, 85, 44, 0.9)',
+      ],
+    },
+  });
+
   // Sightings: clustered. Freshness drives the paint — recent is solid sage,
   // archive records render hollow and faded so age is legible at a glance.
   map.addSource('sightings', {
@@ -188,7 +216,23 @@ function addDataLayers(): void {
     },
   });
 
-  // Fires: solid rust markers with a stone casing.
+  // NIFC perimeters: the actual fire footprint when one exists.
+  map.addSource('nifc-perims', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+  map.addLayer({
+    id: 'nifc-perim-fill',
+    type: 'fill',
+    source: 'nifc-perims',
+    paint: { 'fill-color': 'rgba(180, 85, 44, 0.14)' },
+  });
+  map.addLayer({
+    id: 'nifc-perim-line',
+    type: 'line',
+    source: 'nifc-perims',
+    paint: { 'line-color': '#B4552C', 'line-width': 1.6, 'line-dasharray': [3, 2] },
+  });
+
+  // Fire points: NIFC/EONET incidents are full rust markers; FIRMS thermal
+  // detections are smaller pixels so a satellite pass reads as a scatter.
   map.addSource('fires', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
   map.addLayer({
     id: 'fire-points',
@@ -196,9 +240,10 @@ function addDataLayers(): void {
     source: 'fires',
     paint: {
       'circle-color': '#B4552C',
+      'circle-opacity': ['match', ['get', 'kind'], 'detection', 0.8, 1],
       'circle-stroke-color': '#EAE6DA',
-      'circle-stroke-width': 2,
-      'circle-radius': 7,
+      'circle-stroke-width': ['match', ['get', 'kind'], 'detection', 1, 2],
+      'circle-radius': ['match', ['get', 'kind'], 'detection', 4, 7],
     },
   });
 }
@@ -258,13 +303,28 @@ function wireInteractions(): void {
     if (!f) return;
     const p = f.properties!;
     const coords = ((f.geometry as GeoJSON.Point).coordinates as [number, number]).slice() as [number, number];
+    let title: string;
+    let meta: string;
+    if (p.kind === 'detection') {
+      title = 'Thermal detection · VIIRS';
+      const frp = p.frp != null ? `FRP ${Number(p.frp).toFixed(1)} MW · ` : '';
+      meta = `${frp}confidence ${esc(p.confidence ?? '?')} · ${esc(relativeTime(p.observedAt as string))}`;
+    } else if (p.kind === 'incident') {
+      title = String(p.title);
+      const acres = p.sizeAcres != null ? ` · ${Math.round(Number(p.sizeAcres))} ac` : '';
+      const contained = p.contained != null ? ` · ${p.contained}% contained` : '';
+      meta = `${esc(p.typeLabel)}${acres}${contained} · discovered ${esc(relativeTime(p.observedAt as string))}`;
+    } else {
+      title = String(p.title);
+      meta = `Open wildfire event · reported ${esc(relativeTime(p.observedAt as string))}`;
+    }
     new maplibregl.Popup({ offset: 10, className: 'yfm-popup', maxWidth: '260px' })
       .setLngLat(coords)
       .setHTML(
         `<article>
-          <h3>${esc(p.title)}</h3>
-          <p class="yfm-popup__meta">Open wildfire event · reported ${esc(relativeTime(p.observedAt as string))}</p>
-          <p class="yfm-popup__credit">NASA EONET</p>
+          <h3>${esc(title)}</h3>
+          <p class="yfm-popup__meta">${meta}</p>
+          <p class="yfm-popup__credit">${esc(p.attribution)}</p>
         </article>`,
       )
       .addTo(map);
@@ -325,13 +385,19 @@ function setSourceData(sourceId: string, features: FmFeature[]): void {
 }
 
 function syncSightings(): void {
-  if (map.isStyleLoaded() || map.getSource('sightings')) setSourceData('sightings', state.sightings);
+  if (!map.getSource('sightings')) return;
+  const features = allSightings();
+  setSourceData('sightings', features);
+  setSourceData('sightings-heat', features);
 }
 function syncQuakes(): void {
   if (map.getSource('quakes')) setSourceData('quakes', state.quakes);
 }
 function syncFires(): void {
-  if (map.getSource('fires')) setSourceData('fires', state.fires);
+  if (!map.getSource('fires')) return;
+  setSourceData('fires', allFires());
+  const perims = map.getSource('nifc-perims') as maplibregl.GeoJSONSource | undefined;
+  if (perims) perims.setData(state.nifcPerimeters as never);
 }
 
 function syncLayerVisibility(): void {
@@ -340,8 +406,11 @@ function syncLayerVisibility(): void {
     'sighting-clusters': state.layers.sightings,
     'sighting-cluster-count': state.layers.sightings,
     'sighting-points': state.layers.sightings,
+    'sighting-heat': state.layers.heat,
     'quake-rings': state.layers.hazards,
     'fire-points': state.layers.fire,
+    'nifc-perim-fill': state.layers.fire,
+    'nifc-perim-line': state.layers.fire,
   };
   for (const [layerId, visible] of Object.entries(layerMap)) {
     if (map.getLayer(layerId)) map.setLayoutProperty(layerId, 'visibility', vis(visible));
